@@ -2,7 +2,7 @@ function Contact() {
   return (
     <div style={{ padding: '2rem' }}>
       <h2>Контакты</h2>
-      <p>Свяжитесь с нами:</p>
+      <p>Раздел в разработке.</p>
       <form style={{ maxWidth: '400px' }}>
         <div style={{ marginBottom: '1rem' }}>
           <label style={{ display: 'block', marginBottom: '0.5rem' }}>

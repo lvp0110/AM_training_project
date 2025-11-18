@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
 
 function About() {
   const [brands, setBrands] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedBrand, setSelectedBrand] = useState('')
+  const [brandContent, setBrandContent] = useState(null)
+  const [loadingContent, setLoadingContent] = useState(false)
+  const [contentError, setContentError] = useState(null)
 
   useEffect(() => {
     const fetchBrands = async () => {
@@ -53,6 +57,99 @@ function About() {
 
     fetchBrands()
   }, [])
+
+  useEffect(() => {
+    const fetchBrandContent = async () => {
+      if (!selectedBrand) {
+        setBrandContent(null)
+        return
+      }
+
+      try {
+        setLoadingContent(true)
+        setContentError(null)
+        
+        // Находим выбранный бренд
+        const selected = brands.find((brand) => {
+          const brandValue = brand?.id || brand?.Id || brand?.name_rus || brand?.name
+          return String(brandValue) === String(selectedBrand)
+        })
+
+        if (!selected) {
+          throw new Error('Выбранный бренд не найден')
+        }
+
+        // Получаем код бренда для URL (code, code_en, или преобразуем name_rus в lowercase)
+        const brandCode = selected?.code || selected?.code_en || selected?.code_ru || 
+                         (selected?.name_rus || selected?.name || '').toLowerCase().replace(/\s+/g, '_')
+        
+        console.log('Brand code:', brandCode) // Для отладки
+
+        // Сначала получаем topics и находим topic с code === "brand_line_info"
+        const topicsResponse = await fetch('/api/v2/botservice/topics', {
+          method: 'GET',
+          headers: {
+            'accept': 'application/json'
+          }
+        })
+
+        if (!topicsResponse.ok) {
+          throw new Error(`HTTP error! status: ${topicsResponse.status}`)
+        }
+
+        const topicsData = await topicsResponse.json()
+        console.log('Topics Response:', topicsData) // Для отладки
+
+        // Обработка формата topics
+        let topicsArray = []
+        if (Array.isArray(topicsData)) {
+          topicsArray = topicsData
+        } else if (topicsData && Array.isArray(topicsData.data)) {
+          topicsArray = topicsData.data
+        } else if (topicsData && Array.isArray(topicsData.items)) {
+          topicsArray = topicsData.items
+        } else if (topicsData && typeof topicsData === 'object') {
+          topicsArray = Object.values(topicsData)
+        }
+
+        // Находим topic с code === "brand_line_info"
+        const brandLineInfoTopic = topicsArray.find(topic => 
+          topic?.code === 'brand_line_info' || topic?.Code === 'brand_line_info'
+        )
+
+        if (!brandLineInfoTopic) {
+          throw new Error('Topic "brand_line_info" не найден')
+        }
+
+        // Получаем информацию о бренде
+        const brandInfoResponse = await fetch(`/api/v2/botservice/brandinfo/${brandCode}/topic/brand_line_info`, {
+          method: 'GET',
+          headers: {
+            'accept': 'application/json'
+          }
+        })
+
+        if (!brandInfoResponse.ok) {
+          throw new Error(`HTTP error! status: ${brandInfoResponse.status}`)
+        }
+
+        const brandInfoData = await brandInfoResponse.json()
+        console.log('Brand Info Response:', brandInfoData) // Для отладки
+
+        // Извлекаем content
+        const content = brandInfoData?.content || brandInfoData?.Content || brandInfoData?.data?.content || ''
+        setBrandContent(content)
+      } catch (err) {
+        setContentError(err.message)
+        console.error('Error fetching brand content:', err)
+        setBrandContent(null)
+      } finally {
+        setLoadingContent(false)
+      }
+    }
+
+    fetchBrandContent()
+  }, [selectedBrand, brands])
 
   return (
     <div style={{ padding: '2rem' }}>
@@ -115,10 +212,28 @@ function About() {
               return selected?.name_rus || selected?.name || 'Выбранный бренд'
             })()}
           </h3>
-          <div style={{ color: '#666' }}>
-            <p>Здесь будет отображаться информация о выбранном бренде.</p>
-            <p>Вы можете добавить дополнительную информацию о бренде в этом блоке.</p>
-          </div>
+          {loadingContent && <p>Загрузка информации...</p>}
+          {contentError && (
+            <div style={{ color: 'red', marginTop: '0.5rem' }}>
+              <p>Ошибка загрузки информации: {contentError}</p>
+            </div>
+          )}
+          {!loadingContent && !contentError && brandContent && (
+            <div 
+              style={{ 
+                color: '#333',
+                marginTop: '0.5rem',
+                lineHeight: '1.6'
+              }}
+            >
+              <ReactMarkdown>{brandContent}</ReactMarkdown>
+            </div>
+          )}
+          {!loadingContent && !contentError && !brandContent && (
+            <div style={{ color: '#666', marginTop: '0.5rem' }}>
+              <p>Информация о бренде не найдена.</p>
+            </div>
+          )}
         </div>
       )}
     </div>
