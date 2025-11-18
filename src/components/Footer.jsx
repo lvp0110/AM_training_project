@@ -7,7 +7,7 @@ function Footer() {
       marginTop: '2rem',
       textAlign: 'center'
     }}>
-      <p>&copy; 2024 My Vite React App. Все права защищены.</p>
+      <p>&copy; 2025 My Training Project.</p>
     </footer>
   )
 }

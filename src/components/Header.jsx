@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 
 function Header() {
   return (
@@ -17,19 +17,40 @@ function Header() {
           padding: 0
         }}>
           <li>
-            <Link to="/" style={{ color: 'white', textDecoration: 'none' }}>
+            <NavLink 
+              to="/" 
+              style={({ isActive }) => ({
+                color: isActive ? 'white' : 'white',
+                textDecoration: 'none',
+                fontWeight: isActive ? 'bold' : 'normal'
+              })}
+            >
               Главная
-            </Link>
+            </NavLink>
           </li>
           <li>
-            <Link to="/about" style={{ color: 'white', textDecoration: 'none' }}>
+            <NavLink 
+              to="/about" 
+              style={({ isActive }) => ({
+                color: isActive ? 'white' : 'white',
+                textDecoration: 'none',
+                fontWeight: isActive ? 'bold' : 'normal'
+              })}
+            >
               Материалы
-            </Link>
+            </NavLink>
           </li>
           <li>
-            <Link to="/contact" style={{ color: 'white', textDecoration: 'none' }}>
+            <NavLink 
+              to="/contact" 
+              style={({ isActive }) => ({
+                color: isActive ? 'white' : 'white',
+                textDecoration: 'none',
+                fontWeight: isActive ? 'bold' : 'normal'
+              })}
+            >
               Контакты
-            </Link>
+            </NavLink>
           </li>
         </ul>
       </nav>

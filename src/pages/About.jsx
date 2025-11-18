@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react'
 
 function About() {
-  const [categories, setCategories] = useState([])
+  const [brands, setBrands] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [selectedBrand, setSelectedBrand] = useState('')
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchBrands = async () => {
       try {
         setLoading(true)
         setError(null)
         
-        const response = await fetch('/api/v1/AcousticCategories', {
+        const response = await fetch('/api/v2/botservice/brands', {
           method: 'GET',
           headers: {
             'accept': 'application/json'
@@ -26,31 +27,31 @@ function About() {
         console.log('API Response:', data) // Для отладки
         
         // Обработка разных форматов ответа
-        let categoriesArray = []
+        let brandsArray = []
         if (Array.isArray(data)) {
-          categoriesArray = data
+          brandsArray = data
         } else if (data && Array.isArray(data.data)) {
-          categoriesArray = data.data
+          brandsArray = data.data
         } else if (data && Array.isArray(data.items)) {
-          categoriesArray = data.items
+          brandsArray = data.items
         } else if (data && typeof data === 'object') {
           // Если это объект с ключами, преобразуем в массив
-          categoriesArray = Object.values(data)
+          brandsArray = Object.values(data)
         } else {
           throw new Error('Неожиданный формат данных от API')
         }
         
-        setCategories(categoriesArray)
+        setBrands(brandsArray)
       } catch (err) {
         setError(err.message)
-        console.error('Error fetching categories:', err)
-        setCategories([])
+        console.error('Error fetching brands:', err)
+        setBrands([])
       } finally {
         setLoading(false)
       }
     }
 
-    fetchCategories()
+    fetchBrands()
   }, [])
 
   return (
@@ -66,12 +67,14 @@ function About() {
           </p>
         </div>
       )}
-      {!loading && !error && categories.length === 0 && (
-        <p style={{ color: '#666' }}>Категории не найдены</p>
+      {!loading && !error && brands.length === 0 && (
+        <p style={{ color: '#666' }}>Бренды не найдены</p>
       )}
       <select 
-        name="category" 
-        id="category"
+        name="brand" 
+        id="brand"
+        value={selectedBrand}
+        onChange={(e) => setSelectedBrand(e.target.value)}
         style={{
           width: '100%',
           maxWidth: '400px',
@@ -81,20 +84,43 @@ function About() {
           fontSize: '1rem',
           marginTop: '1rem'
         }}
-        disabled={loading || error || categories.length === 0}
+        disabled={loading || error || brands.length === 0}
       >
-        <option value="">Выберите категорию</option>
-        {categories.map((category, index) => {
-          const categoryName = category?.Name || category?.name || category?.NameRu || category?.nameRu || `Категория ${index + 1}`
-          const categoryValue = category?.Id || category?.id || category?.Name || category?.name || categoryName
+        <option value="">Выберите бренд</option>
+        {brands.map((brand, index) => {
+          const brandName = brand?.name_rus || brand?.name || brand?.Name || `Бренд ${index + 1}`
+          const brandValue = brand?.id || brand?.Id || brand?.name_rus || brand?.name || brandName
           
           return (
-            <option key={index} value={categoryValue}>
-              {categoryName}
+            <option key={index} value={brandValue}>
+              {brandName}
             </option>
           )
         })}
       </select>
+      {selectedBrand && (
+        <div style={{
+          marginTop: '1rem',
+          padding: '1rem',
+          border: '1px solid #ddd',
+          borderRadius: '4px',
+          backgroundColor: '#f9f9f9'
+        }}>
+          <h3 style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+            {(() => {
+              const selected = brands.find((brand) => {
+                const brandValue = brand?.id || brand?.Id || brand?.name_rus || brand?.name
+                return String(brandValue) === String(selectedBrand)
+              })
+              return selected?.name_rus || selected?.name || 'Выбранный бренд'
+            })()}
+          </h3>
+          <div style={{ color: '#666' }}>
+            <p>Здесь будет отображаться информация о выбранном бренде.</p>
+            <p>Вы можете добавить дополнительную информацию о бренде в этом блоке.</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
