@@ -16,7 +16,15 @@ function About() {
         setLoading(true)
         setError(null)
         
-        const response = await fetch('/api/v2/botservice/brands', {
+        // Определяем базовый URL API
+        // В development используем относительный путь (проксируется через Vite)
+        // В production используем переменную окружения VITE_API_URL
+        const apiBaseUrl = import.meta.env.VITE_API_URL || ''
+        const apiUrl = apiBaseUrl 
+          ? `${apiBaseUrl}/api/v2/botservice/brands`
+          : '/api/v2/botservice/brands'
+        
+        const response = await fetch(apiUrl, {
           method: 'GET',
           headers: {
             'accept': 'application/json'
@@ -86,7 +94,12 @@ function About() {
         console.log('Brand code:', brandCode) // Для отладки
 
         // Сначала получаем topics и находим topic с code === "brand_line_info"
-        const topicsResponse = await fetch('/api/v2/botservice/topics', {
+        const apiBaseUrl = import.meta.env.VITE_API_URL || ''
+        const topicsUrl = apiBaseUrl 
+          ? `${apiBaseUrl}/api/v2/botservice/topics`
+          : '/api/v2/botservice/topics'
+        
+        const topicsResponse = await fetch(topicsUrl, {
           method: 'GET',
           headers: {
             'accept': 'application/json'
@@ -122,7 +135,10 @@ function About() {
         }
 
         // Получаем информацию о бренде
-        const brandInfoResponse = await fetch(`/api/v2/botservice/brandinfo/${brandCode}/topic/brand_line_info`, {
+        const brandInfoUrl = apiBaseUrl 
+          ? `${apiBaseUrl}/api/v2/botservice/brandinfo/${brandCode}/topic/brand_line_info`
+          : `/api/v2/botservice/brandinfo/${brandCode}/topic/brand_line_info`
+        const brandInfoResponse = await fetch(brandInfoUrl, {
           method: 'GET',
           headers: {
             'accept': 'application/json'
@@ -159,9 +175,25 @@ function About() {
       {error && (
         <div style={{ color: 'red', marginBottom: '1rem' }}>
           <p>Ошибка: {error}</p>
-          <p style={{ fontSize: '0.9rem', color: '#666' }}>
-            Проверьте, что API сервер запущен на http://localhost:3005
-          </p>
+          {import.meta.env.PROD ? (
+            <div style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+              <p>Для работы API необходимо настроить переменную окружения VITE_API_URL.</p>
+              <p>Создайте файл .env.production с содержимым:</p>
+              <code style={{ 
+                display: 'block', 
+                padding: '0.5rem', 
+                backgroundColor: '#f5f5f5', 
+                borderRadius: '4px',
+                marginTop: '0.5rem'
+              }}>
+                VITE_API_URL=https://your-api-server.com
+              </code>
+            </div>
+          ) : (
+            <p style={{ fontSize: '0.9rem', color: '#666' }}>
+              Проверьте, что API сервер запущен на http://localhost:3005
+            </p>
+          )}
         </div>
       )}
       {!loading && !error && brands.length === 0 && (

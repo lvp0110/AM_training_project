@@ -102,6 +102,28 @@ npm run preview
    
    Если вы используете другой репозиторий, обновите это значение в `vite.config.js`.
 
+3. **Настройка API URL для production:**
+   
+   Для работы API в production необходимо указать URL вашего API сервера. Есть два способа:
+   
+   **Способ 1: Через GitHub Secrets (рекомендуется)**
+   - Перейдите в Settings → Secrets and variables → Actions
+   - Создайте новый secret с именем `VITE_API_URL` и значением URL вашего API (например, `https://api.example.com`)
+   - Обновите `.github/workflows/deploy.yml`, чтобы использовать этот secret:
+     ```yaml
+     - name: Build project
+       run: npm run build
+       env:
+         VITE_API_URL: ${{ secrets.VITE_API_URL }}
+     ```
+   
+   **Способ 2: Через файл .env.production**
+   - Создайте файл `.env.production` в корне проекта:
+     ```
+     VITE_API_URL=https://your-api-server.com
+     ```
+   - Добавьте его в репозиторий (⚠️ **не рекомендуется** для приватных API URL)
+
 После настройки, каждый push в ветку `main` автоматически запустит сборку и деплой.
 
 ### Другие платформы
