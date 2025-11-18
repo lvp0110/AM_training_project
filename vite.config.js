@@ -7,9 +7,10 @@ export default defineConfig({
   resolve: {
     extensions: ['.js', '.jsx', '.json']
   },
-  // Base path для GitHub Pages (замените на имя вашего репозитория)
-  // base: '/am_project/',
-  base: '/',
+  // Base path для GitHub Pages
+  // Для локальной разработки используйте: base: '/'
+  // Для GitHub Pages с подпапкой используйте: base: '/имя-репозитория/'
+  base: '/AM_training_project/',
   server: {
     port: 5173,
     open: true,

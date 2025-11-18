@@ -95,10 +95,12 @@ npm run preview
    - Settings → Pages
    - Source: GitHub Actions
 
-2. Если репозиторий не находится в корне GitHub (например, `username.github.io/repo-name`), раскомментируйте и обновите `base` в `vite.config.js`:
+2. Base path уже настроен в `vite.config.js` для репозитория `AM_training_project`:
    ```js
-   base: '/имя-репозитория/',
+   base: '/AM_training_project/',
    ```
+   
+   Если вы используете другой репозиторий, обновите это значение в `vite.config.js`.
 
 После настройки, каждый push в ветку `main` автоматически запустит сборку и деплой.
 

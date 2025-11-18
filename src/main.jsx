@@ -7,6 +7,7 @@ import './index.css'
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter
+      basename="/AM_training_project"
       future={{
         v7_startTransition: true,
         v7_relativeSplatPath: true
