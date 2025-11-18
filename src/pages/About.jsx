@@ -20,19 +20,23 @@ function About() {
         // В development используем относительный путь (проксируется через Vite)
         // В production используем переменную окружения VITE_API_URL
         const apiBaseUrl = import.meta.env.VITE_API_URL || ''
-        const apiUrl = apiBaseUrl 
-          ? `${apiBaseUrl}/api/v2/botservice/brands`
+        // Убираем завершающий слэш, если есть
+        const cleanBaseUrl = apiBaseUrl.replace(/\/$/, '')
+        const apiUrl = cleanBaseUrl 
+          ? `${cleanBaseUrl}/api/v2/botservice/brands`
           : '/api/v2/botservice/brands'
         
         const response = await fetch(apiUrl, {
           method: 'GET',
           headers: {
             'accept': 'application/json'
-          }
+          },
+          mode: 'cors' // Явно указываем CORS режим
         })
         
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+          const errorText = await response.text().catch(() => '')
+          throw new Error(`HTTP error! status: ${response.status}${errorText ? `: ${errorText}` : ''}`)
         }
         
         const data = await response.json()
@@ -55,8 +59,16 @@ function About() {
         
         setBrands(brandsArray)
       } catch (err) {
-        setError(err.message)
+        // Улучшенная обработка ошибок
+        let errorMessage = err.message
+        if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
+          errorMessage = 'Ошибка подключения к API серверу. Возможные причины: CORS проблема, сервер недоступен или неправильный URL.'
+        } else if (err.message.includes('404')) {
+          errorMessage = `API endpoint не найден (404). Проверьте URL API: ${apiUrl}`
+        }
+        setError(errorMessage)
         console.error('Error fetching brands:', err)
+        console.error('API URL was:', apiUrl)
         setBrands([])
       } finally {
         setLoading(false)
@@ -95,8 +107,9 @@ function About() {
 
         // Сначала получаем topics и находим topic с code === "brand_line_info"
         const apiBaseUrl = import.meta.env.VITE_API_URL || ''
-        const topicsUrl = apiBaseUrl 
-          ? `${apiBaseUrl}/api/v2/botservice/topics`
+        const cleanBaseUrl = apiBaseUrl.replace(/\/$/, '')
+        const topicsUrl = cleanBaseUrl 
+          ? `${cleanBaseUrl}/api/v2/botservice/topics`
           : '/api/v2/botservice/topics'
         
         const topicsResponse = await fetch(topicsUrl, {
@@ -135,8 +148,8 @@ function About() {
         }
 
         // Получаем информацию о бренде
-        const brandInfoUrl = apiBaseUrl 
-          ? `${apiBaseUrl}/api/v2/botservice/brandinfo/${brandCode}/topic/brand_line_info`
+        const brandInfoUrl = cleanBaseUrl 
+          ? `${cleanBaseUrl}/api/v2/botservice/brandinfo/${brandCode}/topic/brand_line_info`
           : `/api/v2/botservice/brandinfo/${brandCode}/topic/brand_line_info`
         const brandInfoResponse = await fetch(brandInfoUrl, {
           method: 'GET',
