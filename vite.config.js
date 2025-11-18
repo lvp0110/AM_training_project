@@ -11,6 +11,14 @@ export default defineConfig({
   // Для локальной разработки используйте: base: '/'
   // Для GitHub Pages с подпапкой используйте: base: '/имя-репозитория/'
   base: '/AM_training_project/',
+  build: {
+    sourcemap: false, // Отключаем source maps для production
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
+      }
+    }
+  },
   server: {
     port: 5173,
     open: true,
