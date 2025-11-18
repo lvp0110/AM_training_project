@@ -23,7 +23,7 @@ function Header() {
           </li>
           <li>
             <Link to="/about" style={{ color: 'white', textDecoration: 'none' }}>
-              О нас
+              Материалы
             </Link>
           </li>
           <li>
