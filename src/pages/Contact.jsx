@@ -1,65 +1,29 @@
 function Contact() {
   return (
-    <div style={{ padding: '2rem' }}>
-      <h2>Контакты</h2>
-      <p>Раздел в разработке.</p>
-      <form style={{ maxWidth: '400px' }}>
-        <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-            Имя:
-            <input
-              type="text"
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                border: '1px solid #ccc',
-                borderRadius: '4px'
-              }}
-            />
-          </label>
-        </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-            Email:
-            <input
-              type="email"
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                border: '1px solid #ccc',
-                borderRadius: '4px'
-              }}
-            />
-          </label>
-        </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-            Сообщение:
-            <textarea
-              rows="4"
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                border: '1px solid #ccc',
-                borderRadius: '4px'
-              }}
-            />
-          </label>
-        </div>
-        <button
-          type="submit"
+    <div style={{ padding: '2rem', textAlign: 'center' }}>
+      <h2>Панель управления контентом</h2>
+      <div style={{ marginTop: '2rem' }}>
+        <a
+          href="https://content.constrtodo.ru:3444/"
+          target="_blank"
+          rel="noopener noreferrer"
           style={{
+            display: 'inline-block',
             backgroundColor: '#007bff',
             color: 'white',
-            padding: '0.5rem 1rem',
-            border: 'none',
+            padding: '1rem 2rem',
+            textDecoration: 'none',
             borderRadius: '4px',
-            cursor: 'pointer'
+            fontSize: '1.1rem',
+            fontWeight: '500',
+            transition: 'background-color 0.3s'
           }}
+          onMouseEnter={(e) => e.target.style.backgroundColor = '#0056b3'}
+          onMouseLeave={(e) => e.target.style.backgroundColor = '#007bff'}
         >
-          Отправить
-        </button>
-      </form>
+          Перейти в панель
+        </a>
+      </div>
     </div>
   )
 }

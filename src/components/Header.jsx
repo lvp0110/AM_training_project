@@ -6,7 +6,7 @@ function Header() {
       backgroundColor: '#333',
       color: 'white',
       padding: '1rem',
-      marginBottom: '2rem'
+      marginBottom: '1rem',
     }}>
       <nav>
         <ul style={{
@@ -49,7 +49,7 @@ function Header() {
                 fontWeight: isActive ? 'bold' : 'normal'
               })}
             >
-              Контакты
+              Панель управления
             </NavLink>
           </li>
         </ul>

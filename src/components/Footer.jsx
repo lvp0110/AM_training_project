@@ -5,7 +5,7 @@ function Footer() {
       color: 'white',
       padding: '1rem',
       marginTop: '2rem',
-      textAlign: 'center'
+      textAlign: 'start'
     }}>
       <p>&copy; 2025 My Training Project.</p>
     </footer>

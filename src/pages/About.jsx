@@ -1,254 +1,423 @@
-import { useState, useEffect } from 'react'
-import ReactMarkdown from 'react-markdown'
+import { useState, useEffect } from "react";
+import Markdown from "react-markdown";
 
 function About() {
-  const [brands, setBrands] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [selectedBrand, setSelectedBrand] = useState('')
-  const [brandContent, setBrandContent] = useState(null)
-  const [loadingContent, setLoadingContent] = useState(false)
-  const [contentError, setContentError] = useState(null)
+  const [brands, setBrands] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedBrand, setSelectedBrand] = useState("");
+  const [brandContent, setBrandContent] = useState(null);
+  const [loadingContent, setLoadingContent] = useState(false);
+  const [contentError, setContentError] = useState(null);
+  const [topics, setTopics] = useState([]);
+  const [topicsLoading, setTopicsLoading] = useState(true);
+  const [topicsError, setTopicsError] = useState(null);
+  const [selectedTopic, setSelectedTopic] = useState("");
 
   useEffect(() => {
     const fetchBrands = async () => {
       try {
-        setLoading(true)
-        setError(null)
-        
+        setLoading(true);
+        setError(null);
+
         // Определяем базовый URL API
         // В development используем относительный путь (проксируется через Vite)
         // В production используем переменную окружения VITE_API_URL
-        const apiBaseUrl = import.meta.env.VITE_API_URL || ''
+        const apiBaseUrl = import.meta.env.VITE_API_URL || "";
         // Убираем завершающий слэш, если есть
-        const cleanBaseUrl = apiBaseUrl.replace(/\/$/, '')
-        const apiUrl = cleanBaseUrl 
+        const cleanBaseUrl = apiBaseUrl.replace(/\/$/, "");
+        const apiUrl = cleanBaseUrl
           ? `${cleanBaseUrl}/api/v2/botservice/brands`
-          : '/api/v2/botservice/brands'
-        
+          : "/api/v2/botservice/brands";
+
         const response = await fetch(apiUrl, {
-          method: 'GET',
+          method: "GET",
           headers: {
-            'accept': 'application/json'
+            accept: "application/json",
           },
-          mode: 'cors' // Явно указываем CORS режим
-        })
-        
+          mode: "cors", // Явно указываем CORS режим
+        });
+
         if (!response.ok) {
-          const errorText = await response.text().catch(() => '')
-          throw new Error(`HTTP error! status: ${response.status}${errorText ? `: ${errorText}` : ''}`)
+          const errorText = await response.text().catch(() => "");
+          throw new Error(
+            `HTTP error! status: ${response.status}${
+              errorText ? `: ${errorText}` : ""
+            }`
+          );
         }
-        
-        const data = await response.json()
-        console.log('API Response:', data) // Для отладки
-        
+
+        const data = await response.json();
+        console.log("API Response:", data); // Для отладки
+
         // Обработка разных форматов ответа
-        let brandsArray = []
+        let brandsArray = [];
         if (Array.isArray(data)) {
-          brandsArray = data
+          brandsArray = data;
         } else if (data && Array.isArray(data.data)) {
-          brandsArray = data.data
+          brandsArray = data.data;
         } else if (data && Array.isArray(data.items)) {
-          brandsArray = data.items
-        } else if (data && typeof data === 'object') {
+          brandsArray = data.items;
+        } else if (data && typeof data === "object") {
           // Если это объект с ключами, преобразуем в массив
-          brandsArray = Object.values(data)
+          brandsArray = Object.values(data);
         } else {
-          throw new Error('Неожиданный формат данных от API')
+          throw new Error("Неожиданный формат данных от API");
         }
-        
-        setBrands(brandsArray)
+
+        setBrands(brandsArray);
       } catch (err) {
         // Улучшенная обработка ошибок
-        let errorMessage = err.message
-        if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
-          errorMessage = 'Ошибка подключения к API серверу. Возможные причины: CORS проблема, сервер недоступен или неправильный URL.'
-        } else if (err.message.includes('404')) {
-          errorMessage = `API endpoint не найден (404). Проверьте URL API: ${apiUrl}`
+        let errorMessage = err.message;
+        if (
+          err.name === "TypeError" &&
+          err.message.includes("Failed to fetch")
+        ) {
+          errorMessage =
+            "Ошибка подключения к API серверу. Возможные причины: CORS проблема, сервер недоступен или неправильный URL.";
+        } else if (err.message.includes("404")) {
+          errorMessage = `API endpoint не найден (404). Проверьте URL API: ${apiUrl}`;
         }
-        setError(errorMessage)
-        console.error('Error fetching brands:', err)
-        console.error('API URL was:', apiUrl)
-        setBrands([])
+        setError(errorMessage);
+        console.error("Error fetching brands:", err);
+        console.error("API URL was:", apiUrl);
+        setBrands([]);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchBrands()
-  }, [])
+    fetchBrands();
+  }, []);
+
+  useEffect(() => {
+    const fetchTopics = async () => {
+      try {
+        setTopicsLoading(true);
+        setTopicsError(null);
+
+        const apiBaseUrl = import.meta.env.VITE_API_URL || "";
+        const cleanBaseUrl = apiBaseUrl.replace(/\/$/, "");
+        const topicsUrl = cleanBaseUrl
+          ? `${cleanBaseUrl}/api/v2/botservice/topics`
+          : "/api/v2/botservice/topics";
+
+        const response = await fetch(topicsUrl, {
+          method: "GET",
+          headers: {
+            accept: "application/json",
+          },
+          mode: "cors",
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => "");
+          throw new Error(
+            `HTTP error! status: ${response.status}${
+              errorText ? `: ${errorText}` : ""
+            }`
+          );
+        }
+
+        const data = await response.json();
+        console.log("Topics API Response:", data);
+
+        // Обработка разных форматов ответа
+        let topicsArray = [];
+        if (Array.isArray(data)) {
+          topicsArray = data;
+        } else if (data && Array.isArray(data.data)) {
+          topicsArray = data.data;
+        } else if (data && Array.isArray(data.items)) {
+          topicsArray = data.items;
+        } else if (data && typeof data === "object") {
+          topicsArray = Object.values(data);
+        } else {
+          throw new Error("Неожиданный формат данных от API");
+        }
+
+        setTopics(topicsArray);
+      } catch (err) {
+        let errorMessage = err.message;
+        if (
+          err.name === "TypeError" &&
+          err.message.includes("Failed to fetch")
+        ) {
+          errorMessage =
+            "Ошибка подключения к API серверу. Возможные причины: CORS проблема, сервер недоступен или неправильный URL.";
+        } else if (err.message.includes("404")) {
+          errorMessage = `API endpoint не найден (404). Проверьте URL API: ${topicsUrl}`;
+        }
+        setTopicsError(errorMessage);
+        console.error("Error fetching topics:", err);
+        setTopics([]);
+      } finally {
+        setTopicsLoading(false);
+      }
+    };
+
+    fetchTopics();
+  }, []);
 
   useEffect(() => {
     const fetchBrandContent = async () => {
       if (!selectedBrand) {
-        setBrandContent(null)
-        return
+        setBrandContent(null);
+        return;
       }
 
       try {
-        setLoadingContent(true)
-        setContentError(null)
-        
+        setLoadingContent(true);
+        setContentError(null);
+
         // Находим выбранный бренд
         const selected = brands.find((brand) => {
-          const brandValue = brand?.id || brand?.Id || brand?.name_rus || brand?.name
-          return String(brandValue) === String(selectedBrand)
-        })
+          const brandValue =
+            brand?.id || brand?.Id || brand?.name_rus || brand?.name;
+          return String(brandValue) === String(selectedBrand);
+        });
 
         if (!selected) {
-          throw new Error('Выбранный бренд не найден')
+          throw new Error("Выбранный бренд не найден");
         }
 
         // Получаем код бренда для URL (code, code_en, или преобразуем name_rus в lowercase)
-        const brandCode = selected?.code || selected?.code_en || selected?.code_ru || 
-                         (selected?.name_rus || selected?.name || '').toLowerCase().replace(/\s+/g, '_')
-        
-        console.log('Brand code:', brandCode) // Для отладки
+        const brandCode =
+          selected?.code ||
+          selected?.code_en ||
+          selected?.code_ru ||
+          (selected?.name_rus || selected?.name || "")
+            .toLowerCase()
+            .replace(/\s+/g, "_");
+
+        console.log("Brand code:", brandCode); // Для отладки
 
         // Сначала получаем topics и находим topic с code === "brand_line_info"
-        const apiBaseUrl = import.meta.env.VITE_API_URL || ''
-        const cleanBaseUrl = apiBaseUrl.replace(/\/$/, '')
-        const topicsUrl = cleanBaseUrl 
+        const apiBaseUrl = import.meta.env.VITE_API_URL || "";
+        const cleanBaseUrl = apiBaseUrl.replace(/\/$/, "");
+        const topicsUrl = cleanBaseUrl
           ? `${cleanBaseUrl}/api/v2/botservice/topics`
-          : '/api/v2/botservice/topics'
-        
+          : "/api/v2/botservice/topics";
+
         const topicsResponse = await fetch(topicsUrl, {
-          method: 'GET',
+          method: "GET",
           headers: {
-            'accept': 'application/json'
-          }
-        })
+            accept: "application/json",
+          },
+        });
 
         if (!topicsResponse.ok) {
-          throw new Error(`HTTP error! status: ${topicsResponse.status}`)
+          throw new Error(`HTTP error! status: ${topicsResponse.status}`);
         }
 
-        const topicsData = await topicsResponse.json()
-        console.log('Topics Response:', topicsData) // Для отладки
+        const topicsData = await topicsResponse.json();
+        console.log("Topics Response:", topicsData); // Для отладки
 
         // Обработка формата topics
-        let topicsArray = []
+        let topicsArray = [];
         if (Array.isArray(topicsData)) {
-          topicsArray = topicsData
+          topicsArray = topicsData;
         } else if (topicsData && Array.isArray(topicsData.data)) {
-          topicsArray = topicsData.data
+          topicsArray = topicsData.data;
         } else if (topicsData && Array.isArray(topicsData.items)) {
-          topicsArray = topicsData.items
-        } else if (topicsData && typeof topicsData === 'object') {
-          topicsArray = Object.values(topicsData)
+          topicsArray = topicsData.items;
+        } else if (topicsData && typeof topicsData === "object") {
+          topicsArray = Object.values(topicsData);
         }
 
         // Находим topic с code === "brand_line_info"
-        const brandLineInfoTopic = topicsArray.find(topic => 
-          topic?.code === 'brand_line_info' || topic?.Code === 'brand_line_info'
-        )
+        const brandLineInfoTopic = topicsArray.find(
+          (topic) =>
+            topic?.code === "brand_line_info" ||
+            topic?.Code === "brand_line_info"
+        );
 
         if (!brandLineInfoTopic) {
-          throw new Error('Topic "brand_line_info" не найден')
+          throw new Error('Topic "brand_line_info" не найден');
         }
 
         // Получаем информацию о бренде
-        const brandInfoUrl = cleanBaseUrl 
+        const brandInfoUrl = cleanBaseUrl
           ? `${cleanBaseUrl}/api/v2/botservice/brandinfo/${brandCode}/topic/brand_line_info`
-          : `/api/v2/botservice/brandinfo/${brandCode}/topic/brand_line_info`
+          : `/api/v2/botservice/brandinfo/${brandCode}/topic/brand_line_info`;
         const brandInfoResponse = await fetch(brandInfoUrl, {
-          method: 'GET',
+          method: "GET",
           headers: {
-            'accept': 'application/json'
-          }
-        })
+            accept: "application/json",
+          },
+        });
 
         if (!brandInfoResponse.ok) {
-          throw new Error(`HTTP error! status: ${brandInfoResponse.status}`)
+          throw new Error(`HTTP error! status: ${brandInfoResponse.status}`);
         }
 
-        const brandInfoData = await brandInfoResponse.json()
-        console.log('Brand Info Response:', brandInfoData) // Для отладки
+        const brandInfoData = await brandInfoResponse.json();
+        console.log("Brand Info Response:", brandInfoData); // Для отладки
 
         // Извлекаем content
-        const content = brandInfoData?.content || brandInfoData?.Content || brandInfoData?.data?.content || ''
-        setBrandContent(content)
+        const content =
+          brandInfoData?.content ||
+          brandInfoData?.Content ||
+          brandInfoData?.data?.content ||
+          "";
+        setBrandContent(content);
       } catch (err) {
-        setContentError(err.message)
-        console.error('Error fetching brand content:', err)
-        setBrandContent(null)
+        setContentError(err.message);
+        console.error("Error fetching brand content:", err);
+        setBrandContent(null);
       } finally {
-        setLoadingContent(false)
+        setLoadingContent(false);
       }
-    }
+    };
 
-    fetchBrandContent()
-  }, [selectedBrand, brands])
+    fetchBrandContent();
+  }, [selectedBrand, brands]);
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h2>Материалы</h2>
+    <div style={{ padding: "2rem" }}>
+      {/* <h2>Материалы</h2> */}
       <p>Список наших материалов и информация о них</p>
       {loading && <p>Загрузка...</p>}
       {error && (
-        <div style={{ color: 'red', marginBottom: '1rem' }}>
+        <div style={{ color: "red", marginBottom: "1rem" }}>
           <p>Ошибка: {error}</p>
           {import.meta.env.PROD ? (
-            <div style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
-              <p>Для работы API необходимо настроить переменную окружения VITE_API_URL.</p>
+            <div
+              style={{ fontSize: "0.9rem", color: "#666", marginTop: "0.5rem" }}
+            >
+              <p>
+                Для работы API необходимо настроить переменную окружения
+                VITE_API_URL.
+              </p>
               <p>Создайте файл .env.production с содержимым:</p>
-              <code style={{ 
-                display: 'block', 
-                padding: '0.5rem', 
-                backgroundColor: '#f5f5f5', 
-                borderRadius: '4px',
-                marginTop: '0.5rem'
-              }}>
+              <code
+                style={{
+                  display: "block",
+                  padding: "0.5rem",
+                  backgroundColor: "#f5f5f5",
+                  borderRadius: "4px",
+                  marginTop: "0.5rem",
+                }}
+              >
                 VITE_API_URL=https://your-api-server.com
               </code>
             </div>
           ) : (
-            <p style={{ fontSize: '0.9rem', color: '#666' }}>
+            <p style={{ fontSize: "0.9rem", color: "#666" }}>
               Проверьте, что API сервер запущен на http://localhost:3005
             </p>
           )}
         </div>
       )}
       {!loading && !error && brands.length === 0 && (
-        <p style={{ color: '#666' }}>Бренды не найдены</p>
+        <p style={{ color: "#666" }}>Бренды не найдены</p>
       )}
-      <select 
-        name="brand" 
+      <div style={{display: "flex", flexWrap: "wrap", flexDirection: "column"}}>
+      <select
+        name="brand"
         id="brand"
         value={selectedBrand}
         onChange={(e) => setSelectedBrand(e.target.value)}
         style={{
-          width: '100%',
-          maxWidth: '400px',
-          padding: '0.5rem',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          fontSize: '1rem',
-          marginTop: '1rem'
+          width: "100%",
+          maxWidth: "400px",
+          padding: "0.5rem",
+          border: "1px solid #ccc",
+          borderRadius: "4px",
+          fontSize: "1rem",
+          marginTop: "1rem",
         }}
         disabled={loading || error || brands.length === 0}
       >
         <option value="">Выберите бренд</option>
         {brands.map((brand, index) => {
-          const brandName = brand?.name_rus || brand?.name || brand?.Name || `Бренд ${index + 1}`
-          const brandValue = brand?.id || brand?.Id || brand?.name_rus || brand?.name || brandName
-          
+          const brandName =
+            brand?.name_rus ||
+            brand?.name ||
+            brand?.Name ||
+            `Бренд ${index + 1}`;
+          const brandValue =
+            brand?.id ||
+            brand?.Id ||
+            brand?.name_rus ||
+            brand?.name ||
+            brandName;
+
           return (
             <option key={index} value={brandValue}>
               {brandName}
             </option>
-          )
+          );
         })}
       </select>
+
       {selectedBrand && (
-        <div style={{
-          marginTop: '1rem',
-          padding: '1rem',
-          border: '1px solid #ddd',
-          borderRadius: '4px',
-          backgroundColor: '#f9f9f9'
-        }}>
-          <h3 style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+        <>
+          {topicsLoading && (
+            <p style={{ marginTop: "0.5rem", color: "#666" }}>
+              Загрузка разделов...
+            </p>
+          )}
+          {topicsError && (
+            <div
+              style={{ color: "red", marginTop: "0.5rem", fontSize: "0.9rem" }}
+            >
+              Ошибка загрузки разделов: {topicsError}
+            </div>
+          )}
+          {/* <select
+            value={selectedTopic}
+            onChange={(e) => setSelectedTopic(e.target.value)}
+            style={{
+              width: "100%",
+              maxWidth: "400px",
+              padding: "0.5rem",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              fontSize: "1rem",
+              marginTop: "1rem",
+            }}
+            disabled={topicsLoading || topicsError || topics.length === 0}
+          >
+            <option value="">Выберите раздел</option>
+            {topics.map((topic, index) => {
+              const topicDescription =
+                topic?.description ||
+                topic?.Description ||
+                topic?.name ||
+                topic?.Name ||
+                `Раздел ${index + 1}`;
+              const topicValue =
+                topic?.id ||
+                topic?.Id ||
+                topic?.code ||
+                topic?.Code ||
+                topic?.description ||
+                String(index);
+
+              return (
+                <option key={index} value={topicValue}>
+                  {topicDescription}
+                </option>
+              );
+            })}
+          </select> */}
+        </>
+      )}
+      </div>
+      
+
+      {selectedBrand && (
+        <div
+          style={{
+            marginTop: "1rem",
+            padding: "1rem",
+            border: "1px solid #ddd",
+            borderRadius: "4px",
+            backgroundColor: "#f9f9f9",
+          }}
+        >
+          {/* <h3 style={{ marginTop: 0, marginBottom: '0.5rem',color: '#333'}}>
             {(() => {
               const selected = brands.find((brand) => {
                 const brandValue = brand?.id || brand?.Id || brand?.name_rus || brand?.name
@@ -256,33 +425,33 @@ function About() {
               })
               return selected?.name_rus || selected?.name || 'Выбранный бренд'
             })()}
-          </h3>
+          </h3> */}
           {loadingContent && <p>Загрузка информации...</p>}
           {contentError && (
-            <div style={{ color: 'red', marginTop: '0.5rem' }}>
+            <div style={{ color: "red", marginTop: "0.5rem" }}>
               <p>Ошибка загрузки информации: {contentError}</p>
             </div>
           )}
           {!loadingContent && !contentError && brandContent && (
-            <div 
-              style={{ 
-                color: '#333',
-                marginTop: '0.5rem',
-                lineHeight: '1.6'
+            <div
+              style={{
+                color: "#333",
+                marginTop: "0.5rem",
+                lineHeight: "1.6",
               }}
             >
-              <ReactMarkdown>{brandContent}</ReactMarkdown>
+              <Markdown>{brandContent}</Markdown>
             </div>
           )}
           {!loadingContent && !contentError && !brandContent && (
-            <div style={{ color: '#666', marginTop: '0.5rem' }}>
+            <div style={{ color: "#666", marginTop: "0.5rem" }}>
               <p>Информация о бренде не найдена.</p>
             </div>
           )}
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export default About
+export default About;
