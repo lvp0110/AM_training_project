@@ -21,7 +21,7 @@ function Contact() {
           onMouseEnter={(e) => e.target.style.backgroundColor = '#0056b3'}
           onMouseLeave={(e) => e.target.style.backgroundColor = '#007bff'}
         >
-          Перейти в панель
+          Перейти в панель...
         </a>
       </div>
     </div>
