@@ -37,6 +37,22 @@ jobs:
           # Иначе будет использован .env.production из репозитория
           VITE_API_URL: ${{ secrets.VITE_API_URL || '' }}
 
+      - name: Verify build output
+        run: |
+          echo "=== Checking dist/index.html ==="
+          cat dist/index.html
+          echo ""
+          echo "=== Checking for main.jsx reference ==="
+          if grep -q "/src/main.jsx" dist/index.html; then
+            echo "ERROR: Found /src/main.jsx in dist/index.html!"
+            exit 1
+          else
+            echo "✓ No /src/main.jsx found - build is correct"
+          fi
+          echo ""
+          echo "=== Listing dist files ==="
+          ls -la dist/
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
