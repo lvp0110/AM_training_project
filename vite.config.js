@@ -24,7 +24,7 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: 'https://constrtodo.ru:3005',
+        target: 'https://dev3.constrtodo.ru:3005',
         changeOrigin: true,
         secure: false
       }

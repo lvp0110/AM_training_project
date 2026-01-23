@@ -7,6 +7,8 @@ function Header() {
       color: 'white',
       padding: '1rem',
       marginBottom: '1rem',
+      width: '100%',
+      boxSizing: 'border-box',
     }}>
       <nav>
         <ul style={{
@@ -40,7 +42,7 @@ function Header() {
               Материалы
             </NavLink>
           </li>
-          <li>
+          {/* <li>
             <NavLink 
               to="/contact" 
               style={({ isActive }) => ({
@@ -51,7 +53,7 @@ function Header() {
             >
               Панель управления
             </NavLink>
-          </li>
+          </li> */}
         </ul>
       </nav>
     </header>

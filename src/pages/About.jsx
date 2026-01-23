@@ -161,7 +161,7 @@ function About() {
 
   useEffect(() => {
     const fetchBrandContent = async () => {
-      if (!selectedBrand) {
+      if (!selectedBrand || !selectedTopic) {
         setBrandContent(null);
         return;
       }
@@ -192,54 +192,40 @@ function About() {
 
         console.log("Brand code:", brandCode); // Для отладки
 
-        // Сначала получаем topics и находим topic с code === "brand_line_info"
-        const apiBaseUrl = import.meta.env.VITE_API_URL || "";
-        const cleanBaseUrl = apiBaseUrl.replace(/\/$/, "");
-        const topicsUrl = cleanBaseUrl
-          ? `${cleanBaseUrl}/api/v2/botservice/topics`
-          : "/api/v2/botservice/topics";
-
-        const topicsResponse = await fetch(topicsUrl, {
-          method: "GET",
-          headers: {
-            accept: "application/json",
-          },
+        // Находим выбранный раздел (topic)
+        const selectedTopicObj = topics.find((topic) => {
+          const topicValue =
+            topic?.id ||
+            topic?.Id ||
+            topic?.code ||
+            topic?.Code ||
+            topic?.description ||
+            topic?.Description ||
+            "";
+          return String(topicValue) === String(selectedTopic);
         });
 
-        if (!topicsResponse.ok) {
-          throw new Error(`HTTP error! status: ${topicsResponse.status}`);
+        if (!selectedTopicObj) {
+          throw new Error("Выбранный раздел не найден");
         }
 
-        const topicsData = await topicsResponse.json();
-        console.log("Topics Response:", topicsData); // Для отладки
+        // Получаем code раздела для URL
+        const topicCode =
+          selectedTopicObj?.code ||
+          selectedTopicObj?.Code ||
+          selectedTopicObj?.id ||
+          selectedTopicObj?.Id ||
+          "brand_line_info"; // Fallback на brand_line_info
 
-        // Обработка формата topics
-        let topicsArray = [];
-        if (Array.isArray(topicsData)) {
-          topicsArray = topicsData;
-        } else if (topicsData && Array.isArray(topicsData.data)) {
-          topicsArray = topicsData.data;
-        } else if (topicsData && Array.isArray(topicsData.items)) {
-          topicsArray = topicsData.items;
-        } else if (topicsData && typeof topicsData === "object") {
-          topicsArray = Object.values(topicsData);
-        }
+        console.log("Topic code:", topicCode); // Для отладки
 
-        // Находим topic с code === "brand_line_info"
-        const brandLineInfoTopic = topicsArray.find(
-          (topic) =>
-            topic?.code === "brand_line_info" ||
-            topic?.Code === "brand_line_info"
-        );
-
-        if (!brandLineInfoTopic) {
-          throw new Error('Topic "brand_line_info" не найден');
-        }
-
-        // Получаем информацию о бренде
+        // Получаем информацию о бренде для выбранного раздела
+        const apiBaseUrl = import.meta.env.VITE_API_URL || "";
+        const cleanBaseUrl = apiBaseUrl.replace(/\/$/, "");
         const brandInfoUrl = cleanBaseUrl
-          ? `${cleanBaseUrl}/api/v2/botservice/brandinfo/${brandCode}/topic/brand_line_info`
-          : `/api/v2/botservice/brandinfo/${brandCode}/topic/brand_line_info`;
+          ? `${cleanBaseUrl}/api/v2/botservice/brandinfo/${brandCode}/topic/${topicCode}`
+          : `/api/v2/botservice/brandinfo/${brandCode}/topic/${topicCode}`;
+        
         const brandInfoResponse = await fetch(brandInfoUrl, {
           method: "GET",
           headers: {
@@ -271,11 +257,44 @@ function About() {
     };
 
     fetchBrandContent();
-  }, [selectedBrand, brands]);
+  }, [selectedBrand, selectedTopic, brands, topics]);
 
   return (
-    <div style={{ padding: "2rem" }}>
+    <div style={{ padding: " 0 2rem" }}>
       {/* <h2>Материалы</h2> */}
+      <div style={{  textAlign: 'right' }}>
+        <a
+          href="https://content.constrtodo.ru:3444/"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'inline-block',
+            textDecoration: 'none'
+          }}
+        >
+          <img 
+            src="./Panel.png" 
+            alt="Перейти в панель управления"
+            style={{
+              maxWidth: '70px',
+              height: 'auto',
+              cursor: 'pointer',
+              transition: 'opacity 0.3s, transform 0.3s',
+              transform: 'scale(1)',
+              background: "radial-gradient(circle 65px at center, rgba(227, 228, 230, 0.1), rgba(227, 228, 230, 0.6))",
+              borderRadius: 6,
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.opacity = '0.8';
+              e.target.style.transform = 'scale(1.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.opacity = '1';
+              e.target.style.transform = 'scale(1)';
+            }}
+          />
+        </a>
+      </div>
       <p>Список наших материалов и информация о них</p>
       {loading && <p>Загрузка...</p>}
       {error && (
@@ -317,7 +336,10 @@ function About() {
         name="brand"
         id="brand"
         value={selectedBrand}
-        onChange={(e) => setSelectedBrand(e.target.value)}
+        onChange={(e) => {
+          setSelectedBrand(e.target.value);
+          setSelectedTopic(""); // Сбрасываем выбранный раздел при смене бренда
+        }}
         style={{
           width: "100%",
           maxWidth: "400px",
@@ -355,7 +377,44 @@ function About() {
         <>
           {topicsLoading && (
             <p style={{ marginTop: "0.5rem", color: "#666" }}>
-              Загрузка разделов...
+              {(() => {
+                // Если выбран раздел, показываем его название
+                if (selectedTopic) {
+                  const currentTopic = topics.find(
+                    (topic) =>
+                      String(topic?.id || topic?.Id || topic?.code || topic?.Code || "") === String(selectedTopic) ||
+                      String(topic?.description || topic?.Description || topic?.name || topic?.Name || "") === String(selectedTopic)
+                  );
+                  if (currentTopic) {
+                    const topicName = 
+                      currentTopic?.description ||
+                      currentTopic?.Description ||
+                      currentTopic?.name ||
+                      currentTopic?.Name ||
+                      currentTopic?.code ||
+                      currentTopic?.Code ||
+                      "раздела";
+                    return `Загрузка ${topicName}...`;
+                  }
+                }
+                // Если загружается раздел с code === "brand_line_info"
+                const brandLineInfoTopic = topics.find(
+                  (topic) =>
+                    topic?.code === "brand_line_info" ||
+                    topic?.Code === "brand_line_info"
+                );
+                if (brandLineInfoTopic) {
+                  const topicName = 
+                    brandLineInfoTopic?.description ||
+                    brandLineInfoTopic?.Description ||
+                    brandLineInfoTopic?.name ||
+                    brandLineInfoTopic?.Name ||
+                    "раздела";
+                  return `Загрузка ${topicName}...`;
+                }
+                // По умолчанию
+                return "Загрузка разделов...";
+              })()}
             </p>
           )}
           {topicsError && (
@@ -365,7 +424,7 @@ function About() {
               Ошибка загрузки разделов: {topicsError}
             </div>
           )}
-          {/* <select
+          <select
             value={selectedTopic}
             onChange={(e) => setSelectedTopic(e.target.value)}
             style={{
@@ -401,17 +460,15 @@ function About() {
                 </option>
               );
             })}
-          </select> */}
+          </select>
         </>
       )}
       </div>
-      
-
-      {selectedBrand && (
+      {selectedBrand && selectedTopic && (
         <div
           style={{
             marginTop: "1rem",
-            padding: "1rem",
+            padding: "2rem",
             border: "1px solid #ddd",
             borderRadius: "4px",
             backgroundColor: "#f9f9f9",
@@ -426,7 +483,35 @@ function About() {
               return selected?.name_rus || selected?.name || 'Выбранный бренд'
             })()}
           </h3> */}
-          {loadingContent && <p>Загрузка информации...</p>}
+          {loadingContent && (
+            <p>
+              {(() => {
+                const currentTopic = topics.find(
+                  (topic) => {
+                    const topicValue =
+                      topic?.id ||
+                      topic?.Id ||
+                      topic?.code ||
+                      topic?.Code ||
+                      topic?.description ||
+                      topic?.Description ||
+                      "";
+                    return String(topicValue) === String(selectedTopic);
+                  }
+                );
+                if (currentTopic) {
+                  const topicName = 
+                    currentTopic?.description ||
+                    currentTopic?.Description ||
+                    currentTopic?.name ||
+                    currentTopic?.Name ||
+                    "раздела";
+                  return `Загрузка ${topicName}...`;
+                }
+                return "Загрузка информации...";
+              })()}
+            </p>
+          )}
           {contentError && (
             <div style={{ color: "red", marginTop: "0.5rem" }}>
               <p>Ошибка загрузки информации: {contentError}</p>
@@ -445,7 +530,7 @@ function About() {
           )}
           {!loadingContent && !contentError && !brandContent && (
             <div style={{ color: "#666", marginTop: "0.5rem" }}>
-              <p>Информация о бренде не найдена.</p>
+              <p>Информация о разделе не найдена.</p>
             </div>
           )}
         </div>
