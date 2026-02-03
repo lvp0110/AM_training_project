@@ -520,7 +520,7 @@ function About() {
           {!loadingContent && !contentError && brandContent && (
             <div
               style={{
-                color: "#333",
+                color: "#333333",
                 marginTop: "0.5rem",
                 lineHeight: "1.6",
               }}
