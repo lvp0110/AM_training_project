@@ -33,9 +33,9 @@ jobs:
       - name: Build project
         run: npm run build
         env:
-          # Используйте GitHub Secrets для настройки API URL (если установлен)
-          # Иначе будет использован .env.production из репозитория
-          VITE_API_URL: ${{ secrets.VITE_API_URL || '' }}
+          # После публикации API запросы идут на dev3.constrtodo.ru:3005
+          # Переопределите через GitHub Secret VITE_API_URL при необходимости
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://dev3.constrtodo.ru:3005' }}
 
       - name: Verify build output
         run: |
