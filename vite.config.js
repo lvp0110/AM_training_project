@@ -21,7 +21,14 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    strictPort: true, // Ошибка, если 5173 занят — освободите порт (lsof -i :5173)
     open: true,
+    hmr: {
+      protocol: 'ws',
+      host: 'localhost',
+      port: 5173,
+      clientPort: 5173
+    },
     proxy: {
       '/api': {
         target: 'https://dev3.constrtodo.ru:3005',

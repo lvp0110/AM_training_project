@@ -7,6 +7,7 @@ function About() {
   const [error, setError] = useState(null);
   const [selectedBrand, setSelectedBrand] = useState("");
   const [brandContent, setBrandContent] = useState(null);
+  const [sections, setSections] = useState([]); // все загруженные разделы { topicValue, topicName, content }
   const [loadingContent, setLoadingContent] = useState(false);
   const [contentError, setContentError] = useState(null);
   const [topics, setTopics] = useState([]);
@@ -161,8 +162,9 @@ function About() {
 
   useEffect(() => {
     const fetchBrandContent = async () => {
-      if (!selectedBrand || !selectedTopic) {
+      if (!selectedBrand || !brands.length || !topics.length) {
         setBrandContent(null);
+        setSections([]);
         return;
       }
 
@@ -170,7 +172,6 @@ function About() {
         setLoadingContent(true);
         setContentError(null);
 
-        // Находим выбранный бренд
         const selected = brands.find((brand) => {
           const brandValue =
             brand?.id || brand?.Id || brand?.name_rus || brand?.name;
@@ -181,7 +182,6 @@ function About() {
           throw new Error("Выбранный бренд не найден");
         }
 
-        // Получаем код бренда для URL (code, code_en, или преобразуем name_rus в lowercase)
         const brandCode =
           selected?.code ||
           selected?.code_en ||
@@ -190,74 +190,77 @@ function About() {
             .toLowerCase()
             .replace(/\s+/g, "_");
 
-        console.log("Brand code:", brandCode); // Для отладки
-
-        // Находим выбранный раздел (topic)
-        const selectedTopicObj = topics.find((topic) => {
-          const topicValue =
-            topic?.id ||
-            topic?.Id ||
-            topic?.code ||
-            topic?.Code ||
-            topic?.description ||
-            topic?.Description ||
-            "";
-          return String(topicValue) === String(selectedTopic);
-        });
-
-        if (!selectedTopicObj) {
-          throw new Error("Выбранный раздел не найден");
-        }
-
-        // Получаем code раздела для URL
-        const topicCode =
-          selectedTopicObj?.code ||
-          selectedTopicObj?.Code ||
-          selectedTopicObj?.id ||
-          selectedTopicObj?.Id ||
-          "brand_line_info"; // Fallback на brand_line_info
-
-        console.log("Topic code:", topicCode); // Для отладки
-
-        // Получаем информацию о бренде для выбранного раздела
         const apiBaseUrl = import.meta.env.VITE_API_URL || "";
         const cleanBaseUrl = apiBaseUrl.replace(/\/$/, "");
-        const brandInfoUrl = cleanBaseUrl
-          ? `${cleanBaseUrl}/api/v2/botservice/brandinfo/${brandCode}/topic/${topicCode}`
-          : `/api/v2/botservice/brandinfo/${brandCode}/topic/${topicCode}`;
-        
-        const brandInfoResponse = await fetch(brandInfoUrl, {
-          method: "GET",
-          headers: {
-            accept: "application/json",
-          },
+
+        // Загружаем контент по всем разделам
+        const fetchPromises = topics.map((topic, index) => {
+          const topicCode =
+            topic?.code ||
+            topic?.Code ||
+            topic?.id ||
+            topic?.Id ||
+            "brand_line_info";
+          const topicName =
+            topic?.description ||
+            topic?.Description ||
+            topic?.name ||
+            topic?.Name ||
+            topicCode;
+          const topicValue =
+            topic?.id ??
+            topic?.Id ??
+            topic?.code ??
+            topic?.Code ??
+            topic?.description ??
+            topic?.Description ??
+            String(index);
+          const brandInfoUrl = cleanBaseUrl
+            ? `${cleanBaseUrl}/api/v2/botservice/brandinfo/${brandCode}/topic/${topicCode}`
+            : `/api/v2/botservice/brandinfo/${brandCode}/topic/${topicCode}`;
+          return fetch(brandInfoUrl, {
+            method: "GET",
+            headers: { accept: "application/json" },
+          })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((brandInfoData) => {
+              if (!brandInfoData) return null;
+              const content =
+                brandInfoData?.content ||
+                brandInfoData?.Content ||
+                brandInfoData?.data?.content ||
+                "";
+              return content.trim()
+                ? { topicValue, topicName, content }
+                : null;
+            })
+            .catch(() => null);
         });
 
-        if (!brandInfoResponse.ok) {
-          throw new Error(`HTTP error! status: ${brandInfoResponse.status}`);
-        }
+        const results = await Promise.all(fetchPromises);
+        const sectionsList = (results.filter(Boolean));
+        setSections(sectionsList);
 
-        const brandInfoData = await brandInfoResponse.json();
-        console.log("Brand Info Response:", brandInfoData); // Для отладки
-
-        // Извлекаем content
-        const content =
-          brandInfoData?.content ||
-          brandInfoData?.Content ||
-          brandInfoData?.data?.content ||
-          "";
-        setBrandContent(content);
+        const fullContent = sectionsList
+          .map(({ topicName, content }) => `## ${topicName}\n\n${content}`)
+          .join("\n\n");
+        setBrandContent(fullContent || null);
       } catch (err) {
         setContentError(err.message);
         console.error("Error fetching brand content:", err);
         setBrandContent(null);
+        setSections([]);
       } finally {
         setLoadingContent(false);
       }
     };
 
     fetchBrandContent();
-  }, [selectedBrand, selectedTopic, brands, topics]);
+  }, [selectedBrand, brands, topics]);
+
+  const displayedContent = selectedTopic
+    ? sections.find((s) => String(s.topicValue) === String(selectedTopic))?.content ?? null
+    : brandContent;
 
   return (
     <div style={{ padding: " 0 2rem" }}>
@@ -464,7 +467,7 @@ function About() {
         </>
       )}
       </div>
-      {selectedBrand && selectedTopic && (
+      {selectedBrand && (
         <div
           style={{
             marginTop: "1rem",
@@ -474,50 +477,15 @@ function About() {
             backgroundColor: "#f9f9f9",
           }}
         >
-          {/* <h3 style={{ marginTop: 0, marginBottom: '0.5rem',color: '#333'}}>
-            {(() => {
-              const selected = brands.find((brand) => {
-                const brandValue = brand?.id || brand?.Id || brand?.name_rus || brand?.name
-                return String(brandValue) === String(selectedBrand)
-              })
-              return selected?.name_rus || selected?.name || 'Выбранный бренд'
-            })()}
-          </h3> */}
           {loadingContent && (
-            <p>
-              {(() => {
-                const currentTopic = topics.find(
-                  (topic) => {
-                    const topicValue =
-                      topic?.id ||
-                      topic?.Id ||
-                      topic?.code ||
-                      topic?.Code ||
-                      topic?.description ||
-                      topic?.Description ||
-                      "";
-                    return String(topicValue) === String(selectedTopic);
-                  }
-                );
-                if (currentTopic) {
-                  const topicName = 
-                    currentTopic?.description ||
-                    currentTopic?.Description ||
-                    currentTopic?.name ||
-                    currentTopic?.Name ||
-                    "раздела";
-                  return `Загрузка ${topicName}...`;
-                }
-                return "Загрузка информации...";
-              })()}
-            </p>
+            <p>Загрузка всех разделов...</p>
           )}
           {contentError && (
             <div style={{ color: "red", marginTop: "0.5rem" }}>
               <p>Ошибка загрузки информации: {contentError}</p>
             </div>
           )}
-          {!loadingContent && !contentError && brandContent && (
+          {!loadingContent && !contentError && displayedContent && (
             <div
               style={{
                 color: "#333",
@@ -525,12 +493,35 @@ function About() {
                 lineHeight: "1.6",
               }}
             >
-              <Markdown>{brandContent}</Markdown>
+              <Markdown
+                components={{
+                  h2: ({ node, ...props }) => (
+                    <h2
+                      style={{
+                        color: "#0d47a1",
+                        marginTop: "1.25rem",
+                        marginBottom: "0.5rem",
+                        paddingBottom: "0.25rem",
+                        borderBottom: "2px solid #0d47a1",
+                      }}
+                      {...props}
+                    />
+                  ),
+                  h1: ({ node, ...props }) => (
+                    <h1 style={{ color: "#0d47a1", marginTop: "1rem" }} {...props} />
+                  ),
+                  h3: ({ node, ...props }) => (
+                    <h3 style={{ color: "#1565c0", marginTop: "0.75rem" }} {...props} />
+                  ),
+                }}
+              >
+                {displayedContent}
+              </Markdown>
             </div>
           )}
-          {!loadingContent && !contentError && !brandContent && (
+          {!loadingContent && !contentError && !displayedContent && (
             <div style={{ color: "#666", marginTop: "0.5rem" }}>
-              <p>Информация о разделе не найдена.</p>
+              <p>Информация по разделам не найдена.</p>
             </div>
           )}
         </div>

@@ -52,7 +52,13 @@ npm install
 npm run dev
 ```
 
-Приложение будет доступно по адресу `http://localhost:5173`
+Приложение будет доступно по адресу `http://localhost:5173/AM_training_project/`
+
+**Важно для локальной разработки:**
+- Открывайте приложение **только** по адресу `http://localhost:5173/AM_training_project/`
+- API проксируется через Vite на `https://dev3.constrtodo.ru:3005`
+- Если порт 5173 занят, освободите его: `lsof -i :5173` → `kill <PID>`
+- При ошибке WebSocket/HMR убедитесь, что нет конфликта портов (другие Vite-проекты, `vite preview`)
 
 ### Проверка кода
 
