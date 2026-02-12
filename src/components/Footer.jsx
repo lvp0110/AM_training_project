@@ -9,7 +9,7 @@ function Footer() {
       width: '100%',
       boxSizing: 'border-box',
     }}>
-      <p>&copy; 2025 Test Project.</p>
+      <p>&copy; 2025 Test Tool</p>
     </footer>
   )
 }

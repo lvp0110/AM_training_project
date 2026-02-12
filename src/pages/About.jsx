@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Markdown from "react-markdown";
 
 function About() {
@@ -14,6 +14,9 @@ function About() {
   const [topicsLoading, setTopicsLoading] = useState(true);
   const [topicsError, setTopicsError] = useState(null);
   const [selectedTopic, setSelectedTopic] = useState("");
+  const [expandedSections, setExpandedSections] = useState(new Set());
+  const [sectionsViewMode, setSectionsViewMode] = useState("vertical"); // "vertical" | "horizontal"
+  const sectionRefs = useRef({});
 
   useEffect(() => {
     const fetchBrands = async () => {
@@ -258,9 +261,39 @@ function About() {
     fetchBrandContent();
   }, [selectedBrand, brands, topics]);
 
-  const displayedContent = selectedTopic
-    ? sections.find((s) => String(s.topicValue) === String(selectedTopic))?.content ?? null
-    : brandContent;
+  const openSection = useCallback((topicValue) => {
+    const key = String(topicValue);
+    setExpandedSections((prev) => new Set(prev).add(key));
+    setTimeout(() => {
+      const el = sectionRefs.current[key];
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  }, []);
+
+  const toggleSection = useCallback((topicValue) => {
+    const key = String(topicValue);
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (selectedTopic && sections.length > 0) {
+      setExpandedSections(
+        sectionsViewMode === "horizontal"
+          ? new Set(sections.map((s) => String(s.topicValue)))
+          : new Set([String(selectedTopic)])
+      );
+      const key = String(selectedTopic);
+      setTimeout(() => {
+        const el = sectionRefs.current[key];
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    }
+  }, [selectedTopic, sections, sectionsViewMode]);
 
   return (
     <div style={{ padding: " 0 2rem" }}>
@@ -341,7 +374,8 @@ function About() {
         value={selectedBrand}
         onChange={(e) => {
           setSelectedBrand(e.target.value);
-          setSelectedTopic(""); // Сбрасываем выбранный раздел при смене бренда
+          setSelectedTopic("");
+          setExpandedSections(new Set());
         }}
         style={{
           width: "100%",
@@ -429,7 +463,11 @@ function About() {
           )}
           <select
             value={selectedTopic}
-            onChange={(e) => setSelectedTopic(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setSelectedTopic(val);
+              if (val) openSection(val);
+            }}
             style={{
               width: "100%",
               maxWidth: "400px",
@@ -485,7 +523,7 @@ function About() {
               <p>Ошибка загрузки информации: {contentError}</p>
             </div>
           )}
-          {!loadingContent && !contentError && displayedContent && (
+          {!loadingContent && !contentError && !selectedTopic && brandContent && (
             <div
               style={{
                 color: "#333",
@@ -495,31 +533,185 @@ function About() {
             >
               <Markdown
                 components={{
-                  h2: ({ node, ...props }) => (
-                    <h2
-                      style={{
-                        color: "#0d47a1",
-                        marginTop: "1.25rem",
-                        marginBottom: "0.5rem",
-                        paddingBottom: "0.25rem",
-                        borderBottom: "2px solid #0d47a1",
-                      }}
-                      {...props}
-                    />
-                  ),
-                  h1: ({ node, ...props }) => (
-                    <h1 style={{ color: "#0d47a1", marginTop: "1rem" }} {...props} />
-                  ),
+                  h2: ({ node, ...props }) => {
+                    const handleClick = (e) => {
+                      const text = e.currentTarget.textContent?.trim() ?? "";
+                      const section = sections.find(
+                        (s) => (s.topicName?.trim() ?? "") === text
+                      );
+                      if (section) {
+                        setSelectedTopic(String(section.topicValue));
+                        openSection(section.topicValue);
+                      }
+                    };
+                    return (
+                      <h2
+                        role="button"
+                        tabIndex={0}
+                        style={{
+                          color: "#0d47a1",
+                          marginTop: "1.25rem",
+                          marginBottom: "0.5rem",
+                          paddingBottom: "0.25rem",
+                          borderBottom: "2px solid #0d47a1",
+                          cursor: "pointer",
+                        }}
+                        onClick={handleClick}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            e.currentTarget.click();
+                          }
+                        }}
+                        {...props}
+                      />
+                    );
+                  },
                   h3: ({ node, ...props }) => (
                     <h3 style={{ color: "#1565c0", marginTop: "0.75rem" }} {...props} />
                   ),
                 }}
               >
-                {displayedContent}
+                {brandContent}
               </Markdown>
             </div>
           )}
-          {!loadingContent && !contentError && !displayedContent && (
+          {!loadingContent && !contentError && selectedTopic && sections.length > 0 && (
+            <>
+              <div style={{ marginTop: "0.5rem", marginBottom: "0.5rem" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSectionsViewMode((prev) => {
+                      const next = prev === "vertical" ? "horizontal" : "vertical";
+                      if (next === "horizontal") {
+                        setExpandedSections(new Set(sections.map((s) => String(s.topicValue))));
+                      } else {
+                        setExpandedSections(new Set([String(selectedTopic)]));
+                      }
+                      return next;
+                    });
+                  }}
+                  style={{
+                    padding: "0.5rem 1rem",
+                    fontSize: "0.95rem",
+                    cursor: "pointer",
+                    border: "1px solid #0d47a1",
+                    borderRadius: "4px",
+                    backgroundColor: sectionsViewMode === "horizontal" ? "#0d47a1" : "#fff",
+                    color: sectionsViewMode === "horizontal" ? "#fff" : "#0d47a1",
+                  }}
+                >
+                  {sectionsViewMode === "vertical"
+                    ? "Сетка в ряд"
+                    : "Список вертикально"}
+                </button>
+              </div>
+              <div
+                style={{
+                  color: "#333",
+                  marginTop: "0.5rem",
+                  lineHeight: "1.6",
+                  ...(sectionsViewMode === "horizontal"
+                    ? {
+                        display: "grid",
+                        gridTemplateColumns: `repeat(${sections.length}, minmax(280px, 1fr))`,
+                        gap: "1rem",
+                        overflowX: "auto",
+                      }
+                    : {}),
+                }}
+              >
+                {sections.map((section) => {
+                  const key = String(section.topicValue);
+                  const isVertical = sectionsViewMode === "vertical";
+                  const isExpanded = isVertical ? expandedSections.has(key) : true;
+                  return (
+                    <section
+                      key={key}
+                      ref={(el) => {
+                        sectionRefs.current[key] = el;
+                      }}
+                      style={{
+                        border: "1px solid #e0e0e0",
+                        borderRadius: "8px",
+                        overflow: "hidden",
+                        backgroundColor: isExpanded ? "#fff" : "#fafafa",
+                        ...(sectionsViewMode === "vertical"
+                          ? { marginBottom: "1.5rem" }
+                          : {
+                              minWidth: 0,
+                              display: "flex",
+                              flexDirection: "column",
+                            }),
+                      }}
+                    >
+                      <h2
+                        role={isVertical ? "button" : undefined}
+                        tabIndex={isVertical ? 0 : undefined}
+                        onClick={() => {
+                          if (isVertical) toggleSection(section.topicValue);
+                          setSelectedTopic(key);
+                        }}
+                        onKeyDown={
+                          isVertical
+                            ? (e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  toggleSection(section.topicValue);
+                                  setSelectedTopic(key);
+                                }
+                              }
+                            : undefined
+                        }
+                        style={{
+                          margin: 0,
+                          padding: "1rem 1.25rem",
+                          color: "#0d47a1",
+                          borderBottom: isExpanded ? "2px solid #0d47a1" : "none",
+                          cursor: isVertical ? "pointer" : "default",
+                          fontSize: "1.25rem",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <span>{section.topicName}</span>
+                        {isVertical && (
+                          <span style={{ fontSize: "1rem", opacity: 0.8 }}>
+                            {isExpanded ? "▼" : "▶"}
+                          </span>
+                        )}
+                      </h2>
+                      {isExpanded && (
+                        <div
+                          style={{
+                            padding: "1rem 1.25rem",
+                            borderTop: "1px solid #eee",
+                            ...(sectionsViewMode === "horizontal"
+                              ? { overflowY: "auto", flex: 1, minHeight: 0 }
+                              : {}),
+                          }}
+                        >
+                          <Markdown
+                            components={{
+                              h3: ({ node, ...props }) => (
+                                <h3 style={{ color: "#1565c0", marginTop: "0.75rem" }} {...props} />
+                              ),
+                            }}
+                          >
+                            {section.content}
+                          </Markdown>
+                        </div>
+                      )}
+                    </section>
+                  );
+                })}
+              </div>
+            </>
+          )}
+          {!loadingContent && !contentError && !brandContent && sections.length === 0 && (
             <div style={{ color: "#666", marginTop: "0.5rem" }}>
               <p>Информация по разделам не найдена.</p>
             </div>
