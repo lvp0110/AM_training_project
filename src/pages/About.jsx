@@ -479,7 +479,7 @@ function About() {
             }}
             disabled={topicsLoading || topicsError || topics.length === 0}
           >
-            <option value="">Выберите раздел</option>
+            <option value="">Все разделы</option>
             {topics.map((topic, index) => {
               const topicDescription =
                 topic?.description ||
@@ -600,11 +600,27 @@ function About() {
                     borderRadius: "4px",
                     backgroundColor: sectionsViewMode === "horizontal" ? "#0d47a1" : "#fff",
                     color: sectionsViewMode === "horizontal" ? "#fff" : "#0d47a1",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
+                  aria-label={sectionsViewMode === "vertical" ? "Переключить на вид сеткой" : "Переключить на вид списком"}
+                  title={sectionsViewMode === "vertical" ? "Сетка" : "Список"}
                 >
-                  {sectionsViewMode === "vertical"
-                    ? "Сетка в ряд"
-                    : "Список вертикально"}
+                  {sectionsViewMode === "vertical" ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <rect x="2" y="2" width="8" height="8" rx="1" />
+                      <rect x="14" y="2" width="8" height="8" rx="1" />
+                      <rect x="2" y="14" width="8" height="8" rx="1" />
+                      <rect x="14" y="14" width="8" height="8" rx="1" />
+                    </svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                      <line x1="4" y1="6" x2="20" y2="6" />
+                      <line x1="4" y1="12" x2="20" y2="12" />
+                      <line x1="4" y1="18" x2="20" y2="18" />
+                    </svg>
+                  )}
                 </button>
               </div>
               <div
