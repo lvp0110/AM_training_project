@@ -96,15 +96,15 @@ function About() {
 
   useEffect(() => {
     const fetchTopics = async () => {
+      const apiBaseUrl = import.meta.env.VITE_API_URL || "";
+      const cleanBaseUrl = apiBaseUrl.replace(/\/$/, "");
+      const topicsUrl = cleanBaseUrl
+        ? `${cleanBaseUrl}/api/v2/text/categories`
+        : "/api/v2/text/categories";
+
       try {
         setTopicsLoading(true);
         setTopicsError(null);
-
-        const apiBaseUrl = import.meta.env.VITE_API_URL || "";
-        const cleanBaseUrl = apiBaseUrl.replace(/\/$/, "");
-        const topicsUrl = cleanBaseUrl
-          ? `${cleanBaseUrl}/api/v2/botservice/topics`
-          : "/api/v2/botservice/topics";
 
         const response = await fetch(topicsUrl, {
           method: "GET",
@@ -165,7 +165,7 @@ function About() {
 
   useEffect(() => {
     const fetchBrandContent = async () => {
-      if (!selectedBrand || !brands.length || !topics.length) {
+      if (!selectedBrand || !brands.length) {
         setBrandContent(null);
         setSections([]);
         return;
@@ -195,53 +195,71 @@ function About() {
 
         const apiBaseUrl = import.meta.env.VITE_API_URL || "";
         const cleanBaseUrl = apiBaseUrl.replace(/\/$/, "");
+        const infodataUrl = cleanBaseUrl
+          ? `${cleanBaseUrl}/api/v2/infodata/brand`
+          : "/api/v2/infodata/brand";
 
-        // Загружаем контент по всем разделам
-        const fetchPromises = topics.map((topic, index) => {
-          const topicCode =
-            topic?.code ||
-            topic?.Code ||
-            topic?.id ||
-            topic?.Id ||
-            "brand_line_info";
-          const topicName =
-            topic?.description ||
-            topic?.Description ||
-            topic?.name ||
-            topic?.Name ||
-            topicCode;
-          const topicValue =
-            topic?.id ??
-            topic?.Id ??
-            topic?.code ??
-            topic?.Code ??
-            topic?.description ??
-            topic?.Description ??
-            String(index);
-          const brandInfoUrl = cleanBaseUrl
-            ? `${cleanBaseUrl}/api/v2/botservice/brandinfo/${brandCode}/topic/${topicCode}`
-            : `/api/v2/botservice/brandinfo/${brandCode}/topic/${topicCode}`;
-          return fetch(brandInfoUrl, {
-            method: "GET",
-            headers: { accept: "application/json" },
-          })
-            .then((r) => (r.ok ? r.json() : null))
-            .then((brandInfoData) => {
-              if (!brandInfoData) return null;
-              const content =
-                brandInfoData?.content ||
-                brandInfoData?.Content ||
-                brandInfoData?.data?.content ||
-                "";
-              return content.trim()
-                ? { topicValue, topicName, content }
-                : null;
-            })
-            .catch(() => null);
+        const response = await fetch(infodataUrl, {
+          method: "GET",
+          headers: { accept: "application/json" },
         });
 
-        const results = await Promise.all(fetchPromises);
-        const sectionsList = (results.filter(Boolean));
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => "");
+          throw new Error(
+            `HTTP error! status: ${response.status}${errorText ? `: ${errorText}` : ""}`
+          );
+        }
+
+        const data = await response.json();
+
+        // data.data — массив брендов: { entity: { Code, Name, Type: "brand" }, categories: [ { code, name, content: [...], children: [...] } ] }
+        const brandsData = Array.isArray(data?.data) ? data.data : [];
+        const brandItem = brandsData.find(
+          (b) =>
+            (b?.entity?.Code ?? b?.entity?.code ?? "")
+              .toString()
+              .toLowerCase() === brandCode.toString().toLowerCase()
+        );
+        const categories = Array.isArray(brandItem?.categories) ? brandItem.categories : [];
+
+        const sectionsList = categories
+          .map((cat) => {
+            const topicValue = cat?.code ?? cat?.Code ?? "";
+            const topicName = cat?.name ?? cat?.Name ?? topicValue;
+            const contentParts = [];
+
+            // Контент уровня категории (бренд)
+            const catContent = cat?.content ?? [];
+            if (Array.isArray(catContent)) {
+              catContent.forEach((item) => {
+                const name = (item?.name ?? "").trim();
+                const text = (item?.text ?? "").trim();
+                if (text) contentParts.push(name ? `### ${name}\n\n${text}` : text);
+              });
+            }
+
+            // Дочерние элементы (модели)
+            const children = cat?.children ?? [];
+            if (Array.isArray(children)) {
+              children.forEach((child) => {
+                const modelName = child?.Entity?.Name ?? child?.entity?.Name ?? child?.entity?.name ?? "";
+                const childContent = child?.content ?? [];
+                if (Array.isArray(childContent) && childContent.length > 0) {
+                  if (modelName) contentParts.push(`#### ${modelName}`);
+                  childContent.forEach((item) => {
+                    const name = (item?.name ?? "").trim();
+                    const text = (item?.text ?? "").trim();
+                    if (text) contentParts.push(name ? `**${name}**\n\n${text}` : text);
+                  });
+                }
+              });
+            }
+
+            const content = contentParts.join("\n\n");
+            return content ? { topicValue, topicName, content } : null;
+          })
+          .filter(Boolean);
         setSections(sectionsList);
 
         const fullContent = sectionsList
@@ -259,7 +277,7 @@ function About() {
     };
 
     fetchBrandContent();
-  }, [selectedBrand, brands, topics]);
+  }, [selectedBrand, brands]);
 
   const openSection = useCallback((topicValue) => {
     const key = String(topicValue);
@@ -703,7 +721,7 @@ function About() {
                       {isExpanded && (
                         <div
                           style={{
-                            padding: "1rem 1.25rem",
+                            padding: "1rem 2rem",
                             borderTop: "1px solid #eee",
                             ...(sectionsViewMode === "horizontal"
                               ? { overflowY: "auto", flex: 1, minHeight: 0 }
