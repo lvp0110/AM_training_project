@@ -214,6 +214,7 @@ function About() {
         const data = await response.json();
 
         // data.data — массив брендов: { entity: { Code, Name, Type: "brand" }, categories: [ { code, name, content: [...], children: [...] } ] }
+        // Поддержка и camelCase, и PascalCase (бэкенд может отдавать по-разному в dev/prod)
         const brandsData = Array.isArray(data?.data) ? data.data : [];
         const brandItem = brandsData.find(
           (b) =>
@@ -221,7 +222,11 @@ function About() {
               .toString()
               .toLowerCase() === brandCode.toString().toLowerCase()
         );
-        const categories = Array.isArray(brandItem?.categories) ? brandItem.categories : [];
+        const categories = Array.isArray(brandItem?.categories)
+          ? brandItem.categories
+          : Array.isArray(brandItem?.Categories)
+            ? brandItem.Categories
+            : [];
 
         const sectionsList = categories
           .map((cat) => {
@@ -230,26 +235,26 @@ function About() {
             const contentParts = [];
 
             // Контент уровня категории (бренд)
-            const catContent = cat?.content ?? [];
+            const catContent = cat?.content ?? cat?.Content ?? [];
             if (Array.isArray(catContent)) {
               catContent.forEach((item) => {
-                const name = (item?.name ?? "").trim();
-                const text = (item?.text ?? "").trim();
+                const name = (item?.name ?? item?.Name ?? "").trim();
+                const text = (item?.text ?? item?.Text ?? "").trim();
                 if (text) contentParts.push(name ? `### ${name}\n\n${text}` : text);
               });
             }
 
-            // Дочерние элементы (модели)
-            const children = cat?.children ?? [];
+            // Дочерние элементы (модели) — поддержка children и Children (PascalCase с продакшн-API)
+            const children = cat?.children ?? cat?.Children ?? [];
             if (Array.isArray(children)) {
               children.forEach((child) => {
                 const modelName = child?.Entity?.Name ?? child?.entity?.Name ?? child?.entity?.name ?? "";
-                const childContent = child?.content ?? [];
+                const childContent = child?.content ?? child?.Content ?? [];
                 if (Array.isArray(childContent) && childContent.length > 0) {
                   if (modelName) contentParts.push(`#### ${modelName}`);
                   childContent.forEach((item) => {
-                    const name = (item?.name ?? "").trim();
-                    const text = (item?.text ?? "").trim();
+                    const name = (item?.name ?? item?.Name ?? "").trim();
+                    const text = (item?.text ?? item?.Text ?? "").trim();
                     if (text) contentParts.push(name ? `**${name}**\n\n${text}` : text);
                   });
                 }
