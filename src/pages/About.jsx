@@ -726,7 +726,7 @@ function About() {
                       {isExpanded && (
                         <div
                           style={{
-                            padding: "1rem 2rem",
+                            padding: "1rem 2.1rem",
                             borderTop: "1px solid #eee",
                             ...(sectionsViewMode === "horizontal"
                               ? { overflowY: "auto", flex: 1, minHeight: 0 }
