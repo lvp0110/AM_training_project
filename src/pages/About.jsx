@@ -628,7 +628,7 @@ function About() {
                       <h4
                         style={{
                           color: "#1565c0",
-                          marginTop: "0.75rem",
+                          marginTop: "0.7rem",
                           borderBottom: "1px solid #0d47a1",
                         }}
                         {...props}
