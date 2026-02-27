@@ -5,27 +5,55 @@ import remarkGfm from "remark-gfm";
 // Стили для списков и таблиц (глобальный reset в App.css убирает margin/padding)
 const markdownListTableComponents = {
   ul: ({ node, ...props }) => (
-    <ul style={{ margin: "0.5em 0", paddingLeft: "1.5em", listStyleType: "disc" }} {...props} />
+    <ul
+      style={{ margin: "0.5em 0", paddingLeft: "1.5em", listStyleType: "disc" }}
+      {...props}
+    />
   ),
   ol: ({ node, ...props }) => (
-    <ol style={{ margin: "0.5em 0", paddingLeft: "1.5em", listStyleType: "decimal" }} {...props} />
+    <ol
+      style={{
+        margin: "0.5em 0",
+        paddingLeft: "1.5em",
+        listStyleType: "decimal",
+      }}
+      {...props}
+    />
   ),
-  li: ({ node, ...props }) => (
-    <li style={{ margin: "0.25em 0" }} {...props} />
-  ),
+  li: ({ node, ...props }) => <li style={{ margin: "0.25em 0" }} {...props} />,
   table: ({ node, ...props }) => (
     <div style={{ overflowX: "auto", margin: "1em 0" }}>
-      <table style={{ borderCollapse: "collapse", width: "100%", border: "1px solid #ddd" }} {...props} />
+      <table
+        style={{
+          borderCollapse: "collapse",
+          width: "100%",
+          border: "1px solid #ddd",
+        }}
+        {...props}
+      />
     </div>
   ),
-  thead: ({ node, ...props }) => <thead style={{ backgroundColor: "#f5f5f5" }} {...props} />,
+  thead: ({ node, ...props }) => (
+    <thead style={{ backgroundColor: "#f5f5f5" }} {...props} />
+  ),
   tbody: ({ node, ...props }) => <tbody {...props} />,
   tr: ({ node, ...props }) => <tr {...props} />,
   th: ({ node, ...props }) => (
-    <th style={{ border: "1px solid #ddd", padding: "0.5em 0.75em", textAlign: "left", fontWeight: 600 }} {...props} />
+    <th
+      style={{
+        border: "1px solid #ddd",
+        padding: "0.5em 0.75em",
+        textAlign: "left",
+        fontWeight: 600,
+      }}
+      {...props}
+    />
   ),
   td: ({ node, ...props }) => (
-    <td style={{ border: "1px solid #ddd", padding: "0.5em 0.75em" }} {...props} />
+    <td
+      style={{ border: "1px solid #ddd", padding: "0.5em 0.75em" }}
+      {...props}
+    />
   ),
 };
 
@@ -884,6 +912,16 @@ function About() {
                                     style={{
                                       color: "#1565c0",
                                       marginTop: "0.75rem",
+                                    }}
+                                    {...props}
+                                  />
+                                ),
+                                h4: ({ node, ...props }) => (
+                                  <h4
+                                    style={{
+                                      color: "#1565c0",
+                                      marginTop: "0.7rem",
+                                      borderBottom: "1px solid #0d47a1",
                                     }}
                                     {...props}
                                   />

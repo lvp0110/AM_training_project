@@ -1,45 +1,49 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink } from "react-router-dom";
 
 function Header() {
   return (
-    <header style={{
-      backgroundColor: '#333',
-      color: 'white',
-      padding: '1rem',
-      marginBottom: '1rem',
-      width: '100%',
-      boxSizing: 'border-box',
-    }}>
+    <header
+      style={{
+        backgroundColor: "#333",
+        color: "white",
+        padding: "1rem",
+        marginBottom: "1rem",
+        width: "100%",
+        boxSizing: "border-box",
+      }}
+    >
       <nav>
-        <ul style={{
-          listStyle: 'none',
-          display: 'flex',
-          gap: '2rem',
-          margin: 0,
-          padding: 0
-        }}>
+        <ul
+          style={{
+            listStyle: "none",
+            display: "flex",
+            gap: "2rem",
+            margin: 0,
+            padding: 0,
+          }}
+        >
           <li>
-            <NavLink 
-              to="/" 
+            <NavLink
+              to="/home"
               style={({ isActive }) => ({
-                color: isActive ? 'white' : 'white',
-                textDecoration: 'none',
-                fontWeight: isActive ? 'bold' : 'normal'
+                color: isActive ? "white" : "white",
+                textDecoration: isActive ? "underline" : "none",
+                fontWeight: isActive ? "bold" : "normal",
               })}
             >
-              Главная
+              <h3>Бот</h3>
             </NavLink>
           </li>
           <li>
-            <NavLink 
-              to="/about" 
+            <NavLink
+              to="/about"
               style={({ isActive }) => ({
-                color: isActive ? 'white' : 'white',
-                textDecoration: 'none',
-                fontWeight: isActive ? 'bold' : 'normal'
+                color: isActive ? "white" : "white",
+                textDecoration: isActive ? "underline" : "none",
+                fontWeight: isActive ? "bold" : "normal",
               })}
             >
-              Материалы
+              <h3>Контент</h3>
             </NavLink>
           </li>
           {/* <li>
@@ -57,6 +61,6 @@ function Header() {
         </ul>
       </nav>
     </header>
-  )
+  );
 }
-export default Header
+export default Header;
