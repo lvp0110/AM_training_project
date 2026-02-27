@@ -315,7 +315,6 @@ function Home() {
                   whiteSpace: "pre-wrap",
                   fontFamily: "monospace",
                   fontSize: "1.1rem",
-                  maxHeight: "400px",
                   overflow: "auto",
                   color: "black",
                 }}
