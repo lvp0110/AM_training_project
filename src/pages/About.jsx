@@ -44,6 +44,7 @@ function About() {
   const [selectedTopic, setSelectedTopic] = useState("");
   const [expandedSections, setExpandedSections] = useState(new Set());
   const [sectionsViewMode, setSectionsViewMode] = useState("vertical"); // "vertical" | "horizontal"
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
   const sectionRefs = useRef({});
 
   useEffect(() => {
@@ -338,6 +339,28 @@ function About() {
       return next;
     });
   }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSmallScreen(window.innerWidth < 1440);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isSmallScreen && sectionsViewMode !== "vertical") {
+      setSectionsViewMode("vertical");
+      if (selectedTopic) {
+        setExpandedSections(new Set([String(selectedTopic)]));
+      }
+    }
+  }, [isSmallScreen, sectionsViewMode, selectedTopic]);
 
   useEffect(() => {
     if (selectedTopic && sections.length > 0) {
@@ -678,7 +701,9 @@ function About() {
                 <div style={{ marginTop: "0.5rem", marginBottom: "0.5rem" }}>
                   <button
                     type="button"
+                    disabled={isSmallScreen}
                     onClick={() => {
+                      if (isSmallScreen) return;
                       setSectionsViewMode((prev) => {
                         const next =
                           prev === "vertical" ? "horizontal" : "vertical";
@@ -695,23 +720,37 @@ function About() {
                     style={{
                       padding: "0.5rem 1rem",
                       fontSize: "0.95rem",
-                      cursor: "pointer",
+                      cursor: isSmallScreen ? "not-allowed" : "pointer",
                       border: "1px solid #0d47a1",
                       borderRadius: "4px",
-                      backgroundColor:
-                        sectionsViewMode === "horizontal" ? "#0d47a1" : "#fff",
-                      color:
-                        sectionsViewMode === "horizontal" ? "#fff" : "#0d47a1",
+                      backgroundColor: isSmallScreen
+                        ? "#f0f0f0"
+                        : sectionsViewMode === "horizontal"
+                        ? "#0d47a1"
+                        : "#fff",
+                      color: isSmallScreen
+                        ? "#999"
+                        : sectionsViewMode === "horizontal"
+                        ? "#fff"
+                        : "#0d47a1",
                       display: "inline-flex",
                       alignItems: "center",
                       justifyContent: "center",
                     }}
                     aria-label={
-                      sectionsViewMode === "vertical"
+                      isSmallScreen
+                        ? "На этом экране доступен только вид списком"
+                        : sectionsViewMode === "vertical"
                         ? "Переключить на вид сеткой"
                         : "Переключить на вид списком"
                     }
-                    title={sectionsViewMode === "vertical" ? "Сетка" : "Список"}
+                    title={
+                      isSmallScreen
+                        ? "На этом экране доступен только вид списком"
+                        : sectionsViewMode === "vertical"
+                        ? "Сетка"
+                        : "Список"
+                    }
                   >
                     {sectionsViewMode === "vertical" ? (
                       <svg
@@ -752,7 +791,8 @@ function About() {
                     ...(sectionsViewMode === "horizontal"
                       ? {
                           display: "grid",
-                          gridTemplateColumns: `repeat(${sections.length}, minmax(280px, 1fr))`,
+                          // gridTemplateColumns: `repeat(${sections.length}, minmax(280px, 1fr))`,
+                          gridTemplateColumns: `repeat(3, minmax(280px, 1fr))`,
                           gap: "1rem",
                           overflowX: "auto",
                         }
