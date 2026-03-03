@@ -65,7 +65,12 @@ const normalizeList = (data) => {
   if (Array.isArray(data)) return data;
   if (data && Array.isArray(data.data)) return data.data;
   if (data && Array.isArray(data.items)) return data.items;
-  if (data && typeof data === "object") return Object.values(data);
+  if (data && Array.isArray(data.topics)) return data.topics;
+  if (data && typeof data === "object") {
+    const values = Object.values(data);
+    if (values.length === 1 && Array.isArray(values[0])) return values[0];
+    return values;
+  }
   return [];
 };
 
@@ -214,12 +219,7 @@ function Home() {
   const getBrandValue = (brand) =>
     String(brand?.code ?? brand?.id ?? brand?.name_rus ?? brand?.name ?? "");
 
-  const getTopicLabel = (topic) =>
-    topic?.name_rus ||
-    topic?.name ||
-    topic?.title ||
-    topic?.description ||
-    "Тема";
+  const getTopicLabel = (topic) => topic?.name ?? topic?.Name ?? "";
 
   return (
     <div style={{ padding: "2rem" }}>
@@ -270,28 +270,81 @@ function Home() {
                 {topics.length === 0 ? (
                   <p style={{ color: "#666" }}>Категории не найдены.</p>
                 ) : (
-                  <select
-                    value={selectedTopic}
-                    onChange={(e) => setSelectedTopic(e.target.value)}
-                    style={{
-                      minWidth: "240px",
-                      padding: "0.5rem 0.75rem",
-                      fontSize: "1rem",
-                      borderRadius: "6px",
-                      border: "1px solid #ccc",
-                      marginTop: "0.5rem",
-                    }}
-                  >
-                    <option value="">Выберите категорию</option>
-                    {topics.map((topic, index) => {
-                      const value = topic?.code ?? topic?.id ?? index;
-                      return (
-                        <option key={index} value={value}>
-                          {getTopicLabel(topic)}
-                        </option>
-                      );
-                    })}
-                  </select>
+                  <>
+                    <select
+                      value={selectedTopic}
+                      onChange={(e) => setSelectedTopic(e.target.value)}
+                      style={{
+                        width: "100%",
+                        minWidth: "240px",
+                        padding: "0.5rem 0.75rem",
+                        fontSize: "1rem",
+                        borderRadius: "6px",
+                        border: "1px solid #ccc",
+                        marginTop: "0.5rem",
+                      }}
+                    >
+                      <option value="">Выберите категорию</option>
+                      {topics.map((topic, index) => {
+                        const value = topic?.code ?? topic?.id ?? index;
+                        return (
+                          <option key={index} value={value}>
+                            {getTopicLabel(topic)}
+                          </option>
+                        );
+                      })}
+                    </select>
+
+                    {selectedTopic &&
+                      (() => {
+                        const currentTopic = topics.find(
+                          (topic, index) =>
+                            String(topic?.code ?? topic?.id ?? index) ===
+                            String(selectedTopic)
+                        );
+                        const topicName =
+                          currentTopic?.name ?? currentTopic?.Name ?? "";
+                        const description =
+                          currentTopic?.description ??
+                          currentTopic?.Description ??
+                          "";
+                        if (!topicName && !description) return null;
+                        return (
+                          <div
+                            style={{
+                              marginTop: "1rem",
+                              padding: "1rem 1.25rem",
+                              border: "1px solid #e0e0e0",
+                              borderRadius: "4px",
+                              backgroundColor: "#fafafa",
+                              color: "#333",
+                              lineHeight: "1.6",
+                              fontSize: "0.95rem",
+                            }}
+                          >
+                            {topicName && (
+                              <div
+                                style={{
+                                  fontWeight: 600,
+                                  marginBottom: "0.75rem",
+                                  fontSize: "1rem",
+                                }}
+                              >
+                                {/* {topicName} */}
+                              </div>
+                            )}
+                            {description && (
+                              <Markdown
+                                remarkPlugins={[remarkGfm]}
+                                components={markdownListTableComponents}
+                              >
+                                {description}
+                              </Markdown>
+                            )}
+                          </div>
+                        );
+                      })()}
+                  </>
                 )}
               </>
             )}
@@ -330,7 +383,8 @@ function Home() {
                           marginTop: "0.9rem",
                         }}
                         {...props}
-                      />),
+                      />
+                    ),
                     h3: ({ node, ...props }) => (
                       <h3
                         style={{
@@ -338,9 +392,10 @@ function Home() {
                           marginTop: "0.75rem",
                         }}
                         {...props}
-                      />),
+                      />
+                    ),
                   }}
-                  style={{ margin: 0}}
+                  style={{ margin: 0 }}
                 >
                   {brandInfo?.data?.content ??
                     JSON.stringify(brandInfo, null, 2)}
