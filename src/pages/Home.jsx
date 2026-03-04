@@ -226,7 +226,7 @@ function Home() {
       <h2>Добро пожаловать!</h2>
       <p>В данном проекте находится информация о наших материалах</p>
 
-      <section style={{ marginTop: "2rem" }}>
+      <section style={{ marginTop: "1.9rem" }}>
         <h3>Бренды</h3>
         {brandsLoading && <p style={{ color: "#666" }}>Загрузка брендов…</p>}
         {brandsError && <p style={{ color: "#c00" }}>Ошибка: {brandsError}</p>}
