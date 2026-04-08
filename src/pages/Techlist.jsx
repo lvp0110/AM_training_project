@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { getApiBase } from "../apiBase.js";
+import styles from "./Techlist.module.css";
 import productPhoto from "../assets/techlist-product.png";
 import headerLogo from "../assets/acoustic-group-logo.png";
 
