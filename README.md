@@ -56,7 +56,7 @@ npm run dev
 
 **Важно для локальной разработки:**
 - Открывайте приложение **только** по адресу `http://localhost:5173/AM_training_project/`
-- API проксируется через Vite на `https://dev3.constrtodo.ru:3005`
+- Запросы `/api/*` проксируются на `http://localhost:3005` (локальный бэкенд). Для другого хоста задайте в `.env` переменную `VITE_API_PROXY_TARGET` (например `https://dev3.constrtodo.ru:3005`)
 - Если порт 5173 занят, освободите его: `lsof -i :5173` → `kill <PID>`
 - При ошибке WebSocket/HMR убедитесь, что нет конфликта портов (другие Vite-проекты, `vite preview`)
 

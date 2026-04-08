@@ -1,39 +1,46 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  resolve: {
-    extensions: ['.js', '.jsx', '.json']
-  },
-  // Base path для GitHub Pages
-  // Для локальной разработки используйте: base: '/'
-  // Для GitHub Pages с подпапкой используйте: base: '/имя-репозитория/'
-  base: '/AM_training_project/',
-  build: {
-    sourcemap: false, // Отключаем source maps для production
-    rollupOptions: {
-      output: {
-        manualChunks: undefined
-      }
-    }
-  },
-  server: {
-    port: 5173,
-    strictPort: true, // Ошибка, если 5173 занят — освободите порт (lsof -i :5173)
-    open: true,
-    hmr: {
-      protocol: 'ws',
-      host: 'localhost',
-      port: 5173,
-      clientPort: 5173
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  /** Локальный бэкенд по умолчанию; для удалённого API: VITE_API_PROXY_TARGET=https://dev3.constrtodo.ru:3005 */
+  const apiProxyTarget =
+    env.VITE_API_PROXY_TARGET || 'http://localhost:3005'
+
+  return {
+    plugins: [react()],
+    resolve: {
+      extensions: ['.js', '.jsx', '.json']
     },
-    proxy: {
-      '/api': {
-        target: 'https://dev3.constrtodo.ru:3005',
-        changeOrigin: true,
-        secure: false
+    // Base path для GitHub Pages
+    // Для локальной разработки используйте: base: '/'
+    // Для GitHub Pages с подпапкой используйте: base: '/имя-репозитория/'
+    base: '/AM_training_project/',
+    build: {
+      sourcemap: false, // Отключаем source maps для production
+      rollupOptions: {
+        output: {
+          manualChunks: undefined
+        }
+      }
+    },
+    server: {
+      port: 5173,
+      strictPort: true, // Ошибка, если 5173 занят — освободите порт (lsof -i :5173)
+      open: true,
+      hmr: {
+        protocol: 'ws',
+        host: 'localhost',
+        port: 5173,
+        clientPort: 5173
+      },
+      proxy: {
+        '/api': {
+          target: apiProxyTarget,
+          changeOrigin: true,
+          secure: false
+        }
       }
     }
   }

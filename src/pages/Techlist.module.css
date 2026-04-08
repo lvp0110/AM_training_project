@@ -1,0 +1,479 @@
+/*
+ * Пиксельная привязка к макету Figma (A4 595×842 @1x) + референс PNG в проекте.
+ * Figma Dev Mode: https://www.figma.com/design/kvgYvWH9cdIcJBCZ5zeuLR/Untitled?node-id=0-1&m=dev
+ */
+.page {
+  padding: 1.5rem 1rem 3rem;
+  background: #e8eaed;
+  min-height: 100%;
+}
+
+.sheetWrap {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow-x: auto;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.12));
+}
+
+.sheet {
+  --sheet-w: 595px;
+  --blue: #009ee3;
+  --blue-light: #4db6e8;
+  --text: #1a1a1a;
+  --text-muted: #6f6f6f;
+  --border: #bfbfbf;
+  --table-bg: #ececec;
+
+  /* ~13.5% ширины листа, как на референсе */
+  --sidebar-width: 65px;
+  --sidebar-flex-top: 99;
+  --sidebar-flex-bottom: 147;
+
+  width: var(--sheet-w);
+  min-width: var(--sheet-w);
+  max-width: var(--sheet-w);
+  height: 842px;
+  min-height: 842px;
+  max-height: 842px;
+  background: #fff;
+  box-sizing: border-box;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  position: relative;
+  font-family: Arial, Helvetica, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  --text-lh: 1.35;
+  line-height: var(--text-lh);
+  color: var(--text);
+}
+
+.block {
+  box-sizing: border-box;
+}
+
+/* Колонка сайдбара: сверху заголовок, снизу отдельный блок .sideBar.block */
+.sideBarColumn {
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  max-width: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  height: 100%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.sideBarTop {
+  flex: var(--sidebar-flex-top) 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--blue);
+}
+
+/* Нижний участок сайдбара — отдельный семантический блок */
+.sideBar {
+  flex: var(--sidebar-flex-bottom) 1 0;
+  min-height: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  overflow: hidden;
+}
+
+.sideBarBottomStack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  padding: 10px 5px 8px;
+  box-sizing: border-box;
+}
+
+.sideQr {
+  width: 65px;
+  height: 65px;
+  background: #009ee3;
+  border: 1px solid #d0d5d8;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sideQr svg {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+
+.sideTitle {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  color: #fff;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.sideFooter {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  color: #8a9399;
+  font-weight: 100;
+  font-size: 20px;
+  letter-spacing: 0.05em;
+  text-align: center;
+  align-self: center;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+  max-width: calc(var(--sheet-w) - var(--sidebar-width));
+  padding: 7px 13px 8px 11px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 100%;
+  box-sizing: border-box;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin: 25px 0;
+  min-width: 0;
+}
+
+.logoBlock {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.logoImg {
+  display: block;
+  height: 32px;
+  width: auto;
+  max-width: min(100%, 220px);
+  object-fit: contain;
+}
+
+.meta {
+  font-size: 8px;
+  color: var(--text-muted);
+  text-align: right;
+  max-width: 200px;
+  white-space: nowrap;
+  border-bottom: #009ee3 solid 2px;
+}
+
+.topBand {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px 14px;
+  align-items: start;
+  margin-bottom: 45px;
+  min-width: 0;
+}
+
+.topBandLeft {
+  min-width: 0;
+}
+
+.productName {
+  margin: 0 0 2px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--blue);
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin: 0 0 3px;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--blue-light);
+}
+
+.tu {
+  font-weight: 700;
+  font-size: 9px;
+  margin: 0 0 5px;
+  color: var(--text);
+}
+
+.topBandLeft .intro {
+  margin: 0;
+}
+
+.topBandLeft .intro > p {
+  margin: 0;
+}
+
+.topBandLeft .intro > p + p {
+  margin-top: 3px;
+}
+
+.topBandLeft .intro strong {
+  font-weight: 700;
+}
+
+.topBandLeft .intro ul,
+.topBandLeft .intro ol {
+  margin: 0.35em 0 0;
+  padding-left: 1.25em;
+}
+
+.topBandLeft .intro li {
+  margin: 0.15em 0;
+}
+
+.productImg {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  max-height: 130px;
+  object-fit: cover;
+  object-position: center top;
+  align-self: start;
+  justify-self: end;
+}
+
+.intro {
+  margin: 0;
+  font-size: 9px;
+}
+
+/* Две равные колонки как в макете */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 12px;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.colLeft {
+  gap: 15px;
+  padding-right: 10px;
+  border-right: 1px solid var(--blue);
+}
+
+.colRight {
+  gap: 15px;
+  padding-left: 10px;
+}
+
+.section {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+/* Иконки секций ~20–21px по референсу */
+.iconBox {
+  width: 21px;
+  height: 21px;
+  min-width: 21px;
+  background: var(--blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0;
+}
+
+.iconBox svg {
+  width: 11px;
+  height: 11px;
+  fill: #fff;
+}
+
+.sectionBody {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.sectionTitle {
+  font-size: 8px;
+  font-weight: 800;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+
+.sectionLead {
+  margin: 0 0 2px;
+  font-size: 9px;
+}
+
+.sectionBody ul {
+  margin: 0;
+  padding-left: 1.1em;
+  margin-left: 0;
+  list-style-type: disc;
+}
+
+.sectionBody ul.dimList {
+  list-style: none;
+  padding-left: 0;
+  margin-left: 0;
+}
+
+.sectionBody li {
+  margin: 0;
+  font-size: 9px;
+}
+
+.sectionBody li + li {
+  margin-top: 1px;
+}
+
+.sectionBody p {
+  margin: 0;
+  font-size: 9px;
+}
+
+.sectionBody p + p {
+  margin-top: 3px;
+}
+
+.dimList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 9px;
+}
+
+.dimList li::before {
+  content: "— ";
+  color: var(--text-muted);
+}
+
+.diagrams {
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.diagram {
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: center;
+}
+
+.diagram svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto 1px;
+}
+
+.diagramCap {
+  font-size: 7px;
+  color: var(--text-muted);
+}
+
+.thickNote {
+  font-size: 7px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  text-align: center;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9px;
+  margin-bottom: 3px;
+}
+
+.table td {
+  border: 1px solid var(--border);
+  padding: 2px 3px;
+  vertical-align: middle;
+}
+
+.table td:first-child {
+  /* background: var(--table-bg); */
+  width: 88%;
+}
+
+.table td strong {
+  font-weight: 800;
+}
+
+.chartImg {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin-top: 2px;
+}
+
+.footer {
+  margin-top: auto;
+  padding: 5px 0 0;
+  border-top: 1px solid #c8c8c8;
+  font-size: 7px;
+  color: var(--text-muted);
+  text-align: left;
+  min-width: 0;
+}
+
+.footerLine + .footerLine {
+  margin-top: 1px;
+}
+
+@media print {
+  .page {
+    padding: 0;
+    background: #fff;
+  }
+
+  .sheet {
+    box-shadow: none;
+    page-break-after: always;
+  }
+
+  .sheetWrap {
+    filter: none;
+  }
+}

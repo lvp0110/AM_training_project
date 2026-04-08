@@ -46,6 +46,18 @@ function Header() {
               <h3>Контент</h3>
             </NavLink>
           </li>
+          <li>
+            <NavLink
+              to="/techlist"
+              style={({ isActive }) => ({
+                color: isActive ? "white" : "white",
+                textDecoration: isActive ? "underline" : "none",
+                fontWeight: isActive ? "bold" : "normal",
+              })}
+            >
+              <h3>Техлист</h3>
+            </NavLink>
+          </li>
           {/* <li>
             <NavLink 
               to="/contact" 

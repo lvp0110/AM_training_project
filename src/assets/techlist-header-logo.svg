@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130 28" width="130" height="28" aria-hidden="true">
+  <g transform="translate(0 -2)">
+    <circle cx="16" cy="18" r="12" fill="none" stroke="#009ee3" stroke-width="1.4" opacity="0.38" />
+    <circle cx="16" cy="18" r="8.5" fill="none" stroke="#009ee3" stroke-width="1.4" opacity="0.58" />
+    <circle cx="16" cy="18" r="5" fill="none" stroke="#009ee3" stroke-width="1.6" opacity="0.88" />
+    <path fill="#009ee3" d="M16 5 L22 24 H18.5 L16 16.5 L13.5 24 H10 Z" />
+  </g>
+  <text x="34" y="11" fill="#5c5c5c" font-family="Arial, Helvetica, sans-serif" font-size="9" font-weight="800">ACOUSTIC</text>
+  <text x="34" y="22" fill="#e85c0a" font-family="Arial, Helvetica, sans-serif" font-size="9" font-weight="800">GROUP</text>
+</svg>
