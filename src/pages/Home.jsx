@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { getApiBase } from "../apiBase.js";
 
 const markdownListTableComponents = {
   ul: ({ node, ...props }) => (
@@ -54,11 +55,6 @@ const markdownListTableComponents = {
       {...props}
     />
   ),
-};
-
-const getApiBase = () => {
-  const apiBaseUrl = import.meta.env.VITE_API_URL || "";
-  return apiBaseUrl.replace(/\/$/, "");
 };
 
 const normalizeList = (data) => {

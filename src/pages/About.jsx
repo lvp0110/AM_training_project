@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { getApiBase } from "../apiBase.js";
 
 // Стили для списков и таблиц (глобальный reset в App.css убирает margin/padding)
 const markdownListTableComponents = {
@@ -81,12 +82,7 @@ function About() {
         setLoading(true);
         setError(null);
 
-        // Определяем базовый URL API
-        // В development используем относительный путь (проксируется через Vite)
-        // В production используем переменную окружения VITE_API_URL
-        const apiBaseUrl = import.meta.env.VITE_API_URL || "";
-        // Убираем завершающий слэш, если есть
-        const cleanBaseUrl = apiBaseUrl.replace(/\/$/, "");
+        const cleanBaseUrl = getApiBase();
         const apiUrl = cleanBaseUrl
           ? `${cleanBaseUrl}/api/v2/botservice/brands`
           : "/api/v2/botservice/brands";
@@ -153,8 +149,7 @@ function About() {
 
   useEffect(() => {
     const fetchTopics = async () => {
-      const apiBaseUrl = import.meta.env.VITE_API_URL || "";
-      const cleanBaseUrl = apiBaseUrl.replace(/\/$/, "");
+      const cleanBaseUrl = getApiBase();
       const topicsUrl = cleanBaseUrl
         ? `${cleanBaseUrl}/api/v2/text/categories`
         : "/api/v2/text/categories";
@@ -250,8 +245,7 @@ function About() {
             .toLowerCase()
             .replace(/\s+/g, "_");
 
-        const apiBaseUrl = import.meta.env.VITE_API_URL || "";
-        const cleanBaseUrl = apiBaseUrl.replace(/\/$/, "");
+        const cleanBaseUrl = getApiBase();
         const infodataUrl = cleanBaseUrl
           ? `${cleanBaseUrl}/api/v2/infodata/brand`
           : "/api/v2/infodata/brand";

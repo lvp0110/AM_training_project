@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import styles from "./Techlist.module.css";
+import { getApiBase } from "../apiBase.js";
 import productPhoto from "../assets/techlist-product.png";
 import headerLogo from "../assets/acoustic-group-logo.png";
 
@@ -97,11 +97,6 @@ function QrInSidebar() {
   );
 }
 
-const getApiBase = () => {
-  const apiBaseUrl = import.meta.env.VITE_API_URL || "";
-  return apiBaseUrl.replace(/\/$/, "");
-};
-
 const TECHCARD_MODEL_SLUG = "100gidro";
 
 const techIntroMarkdownComponents = {
@@ -162,13 +157,14 @@ function Techlist() {
     let cancelled = false;
     const fetchTechcard = async () => {
       const base = getApiBase();
-      /** Без VITE_API_URL запрос идёт на origin dev-сервера → прокси /api (см. vite.config.js). */
+      /** Dev: пустой base → `/api` и прокси Vite. Production (в т.ч. GitHub Pages): абсолютный URL из env или src/apiBase.js. */
       const url = base
         ? `${base}/api/v2/techcard/model/${TECHCARD_MODEL_SLUG}`
         : `/api/v2/techcard/model/${TECHCARD_MODEL_SLUG}`;
       try {
         const response = await fetch(url, {
           headers: { accept: "application/json" },
+          mode: "cors",
         });
         const json = await response.json().catch(() => null);
         const data = json?.data && typeof json.data === "object" ? json.data : json;
