@@ -551,102 +551,108 @@ function Techlist() {
         </div>
       </div>
 
-      <div className={styles.sheetWrap}>
-        <article
-          className={styles.sheet}
-          aria-label={
-            productTitle
-              ? `Технический лист ${productTitle}`
-              : "Технический лист"
-          }
-        >
-          <div className={`${styles.sideBarColumn} ${styles.block}`}>
-            <div className={`${styles.sideBarTop} ${styles.block}`}>
-              <div className={styles.sideTitle}>{productTitle || "\u00A0"}</div>
-            </div>
-            <aside
-              className={`${styles.sideBar} ${styles.block}`}
-              aria-label={
-                areaApplicationTitle
-                  ? `${areaApplicationTitle}, QR-код`
-                  : "Акустика помещений, QR-код"
-              }
-            >
-              <div className={styles.sideBarBottomStack}>
-                <div className={styles.sideFooter}>
-                  {(areaApplicationTitle || "Акустика помещений").toUpperCase()}
+      <div className={styles.sheetScroll}>
+        <div className={styles.sheetScaleSlot}>
+          <div className={styles.sheetWrapOuter}>
+            <div className={styles.sheetWrap}>
+              <article
+                className={styles.sheet}
+                aria-label={
+                  productTitle
+                    ? `Технический лист ${productTitle}`
+                    : "Технический лист"
+                }
+              >
+                <div className={`${styles.sideBarColumn} ${styles.block}`}>
+                <div className={`${styles.sideBarTop} ${styles.block}`}>
+                  <div className={styles.sideTitle}>{productTitle || "\u00A0"}</div>
                 </div>
+                <aside
+                  className={`${styles.sideBar} ${styles.block}`}
+                  aria-label={
+                    areaApplicationTitle
+                      ? `${areaApplicationTitle}, QR-код`
+                      : "Акустика помещений, QR-код"
+                  }
+                >
+                  <div className={styles.sideBarBottomStack}>
+                    <div className={styles.sideFooter}>
+                      {(areaApplicationTitle || "Акустика помещений").toUpperCase()}
+                    </div>
+                  </div>
+                  <div className={styles.sideQr} title="QR-код">
+                    <QrInSidebar />
+                  </div>
+                </aside>
               </div>
-              <div className={styles.sideQr} title="QR-код">
-                  <QrInSidebar />
-                </div>
-            </aside>
-          </div>
 
-          <div className={styles.body}>
-            <header className={`${styles.headerRow} ${styles.block}`}>
-              <div className={styles.logoBlock}>
-                <img
-                  className={styles.logoImg}
-                  src={headerLogo}
-                  alt="Acoustic Group"
-                  decoding="async"
-                />
-              </div>
-              <div className={styles.meta}>
-                Технический лист № 1.1&nbsp;&nbsp;Версия от 15.11.2021
-              </div>
-            </header>
+              <div className={styles.body}>
+                <header className={`${styles.headerRow} ${styles.block}`}>
+                  <div className={styles.logoBlock}>
+                    <img
+                      className={styles.logoImg}
+                      src={headerLogo}
+                      alt="Acoustic Group"
+                      decoding="async"
+                    />
+                  </div>
+                  <div className={styles.meta}>
+                    Технический лист № 1.1&nbsp;&nbsp;Версия от 15.11.2021
+                  </div>
+                </header>
 
-            <div className={`${styles.topBand} ${styles.block}`}>
-              <div className={styles.topBandLeft}>
-                <h1 className={styles.productName}>{productTitle || "\u00A0"}</h1>
-                <p className={styles.subtitle}>{subtitle || "\u00A0"}</p>
-                <p className={styles.tu}>{toCode || "\u00A0"}</p>
-                <div className={styles.intro}>
-                  {description ? (
-                    <Markdown
-                      remarkPlugins={[remarkGfm]}
-                      components={techIntroMarkdownComponents}
-                    >
-                      {description}
-                    </Markdown>
+                <div className={`${styles.topBand} ${styles.block}`}>
+                  <div className={styles.topBandLeft}>
+                    <h1 className={styles.productName}>{productTitle || "\u00A0"}</h1>
+                    <p className={styles.subtitle}>{subtitle || "\u00A0"}</p>
+                    <p className={styles.tu}>{toCode || "\u00A0"}</p>
+                    <div className={styles.intro}>
+                      {description ? (
+                        <Markdown
+                          remarkPlugins={[remarkGfm]}
+                          components={techIntroMarkdownComponents}
+                        >
+                          {description}
+                        </Markdown>
+                      ) : (
+                        "\u00A0"
+                      )}
+                    </div>
+                  </div>
+                  {titleImageSrc ? (
+                    <img
+                      className={styles.productImg}
+                      src={titleImageSrc}
+                      alt={productTitle || "Панели Акуфон НГ Стандарт"}
+                      decoding="async"
+                    />
                   ) : (
-                    "\u00A0"
+                    <div className={styles.productImgPlaceholder} aria-hidden />
                   )}
                 </div>
+
+                <div className={styles.grid}>
+                  {contentSections.map((s) => (
+                    <Section
+                      key={s.key}
+                      icon={iconForTechcardCode(s.code)}
+                      title={s.title}
+                      text={s.text}
+                      markdownComponents={techIntroMarkdownComponents}
+                    />
+                  ))}
+                </div>
+
+                <footer className={`${styles.footer} ${styles.block}`}>
+                  <div className={styles.footerLine}>Группа компаний «Акустик Групп».</div>
+                  <div className={styles.footerLine}>Техподдержка: 8 (800) 222-08-77</div>
+                  <div className={styles.footerLine}>support@acoustic.ru, www.acoustic.ru</div>
+                </footer>
               </div>
-              {titleImageSrc ? (
-                <img
-                  className={styles.productImg}
-                  src={titleImageSrc}
-                  alt={productTitle || "Панели Акуфон НГ Стандарт"}
-                  decoding="async"
-                />
-              ) : (
-                <div className={styles.productImgPlaceholder} aria-hidden />
-              )}
+            </article>
             </div>
-
-            <div className={styles.grid}>
-              {contentSections.map((s) => (
-                <Section
-                  key={s.key}
-                  icon={iconForTechcardCode(s.code)}
-                  title={s.title}
-                  text={s.text}
-                  markdownComponents={techIntroMarkdownComponents}
-                />
-              ))}
-            </div>
-
-            <footer className={`${styles.footer} ${styles.block}`}>
-              <div className={styles.footerLine}>Группа компаний «Акустик Групп».</div>
-              <div className={styles.footerLine}>Техподдержка: 8 (800) 222-08-77</div>
-              <div className={styles.footerLine}>support@acoustic.ru, www.acoustic.ru</div>
-            </footer>
           </div>
-        </article>
+        </div>
       </div>
     </div>
   );

@@ -6,6 +6,12 @@
   padding: 1.5rem 1rem 3rem;
   background: #e8eaed;
   min-height: 100%;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Панель брендов над листом — не внутри .sheet (макет A4 в Figma) */
@@ -48,12 +54,72 @@
   color: #1a1a1a;
 }
 
-.sheetWrap {
+/*
+ * Лист 595×842 — эталон; k задаётся на .sheetScroll (100cqw). Внешний блок .sheetWrapOuter
+ * имеет ровно 595×k × 842×k px и центрируется — без обрезки «центрированного» 595px layout-бокса
+ * (иначе лист визуально уезжает вправо на мобильных).
+ */
+.sheetScroll {
+  --sheet-k: 1;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.sheetScaleSlot {
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Оболочка реального визуального размера; внутри — layout 595×842 + scale от верхнего левого угла */
+.sheetWrapOuter {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: min(100%, 595px);
+  margin-inline: auto;
   overflow-x: auto;
-  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.12));
+  -webkit-overflow-scrolling: touch;
+}
+
+.sheetWrap {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 595px;
+  height: 842px;
+}
+
+@supports (container-type: inline-size) {
+  .sheetScroll {
+    container-type: inline-size;
+    container-name: techsheet;
+    overflow-x: hidden;
+    overflow-x: clip;
+    --sheet-k: min(1, max(0.08, calc((100cqw - 10px) / 595px)));
+  }
+
+  .sheetWrapOuter {
+    width: calc(595px * var(--sheet-k));
+    height: calc(842px * var(--sheet-k));
+    max-width: 100%;
+    margin-inline: 0;
+    overflow: hidden;
+    overflow-x: clip;
+  }
+
+  .sheetWrap {
+    transform-origin: top left;
+    transform: scale(var(--sheet-k));
+  }
 }
 
 .sheet {
@@ -80,8 +146,10 @@
   box-sizing: border-box;
   display: flex;
   align-items: stretch;
+  flex-shrink: 0;
   overflow: hidden;
   position: relative;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   font-family: Arial, Helvetica, "Helvetica Neue", sans-serif;
   font-size: 14px;
   --text-lh: 1.35;
@@ -522,12 +590,35 @@
     background: #fff;
   }
 
-  .sheet {
-    box-shadow: none;
-    page-break-after: always;
+  .sheetScroll {
+    overflow: visible;
+    container-type: normal;
+    --sheet-k: 1;
+  }
+
+  .sheetScaleSlot {
+    width: auto;
+    height: auto;
+    max-width: none;
+    overflow: visible;
+  }
+
+  .sheetWrapOuter {
+    width: auto;
+    height: auto;
+    max-width: none;
+    margin-inline: auto;
+    overflow: visible;
   }
 
   .sheetWrap {
-    filter: none;
+    transform: none;
+    width: 595px;
+    height: 842px;
+  }
+
+  .sheet {
+    box-shadow: none;
+    page-break-after: always;
   }
 }
