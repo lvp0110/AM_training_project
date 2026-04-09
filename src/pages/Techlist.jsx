@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { getTechcardApiBase } from "../apiBase.js";
+import { getTechcardApiBase, getApiBase } from "../apiBase.js";
 import styles from "./Techlist.module.css";
-import productPhoto from "../assets/techlist-product.png";
 import headerLogo from "../assets/acoustic-group-logo.png";
 
 function IconBuilding() {
@@ -98,8 +97,6 @@ function QrInSidebar() {
   );
 }
 
-const TECHCARD_MODEL_SLUG = "100gidro";
-
 /** URL картинки из API: строка, массив, объект с url/src или относительный путь. */
 function resolveTechcardTitleImageUrl(raw, apiBase) {
   if (raw == null) return "";
@@ -146,6 +143,91 @@ function iconForTechcardCode(code) {
   return <IconCmp />;
 }
 
+/** Ответ GET /api/v2/infodata/brand → плоский список { code, name }. */
+function parseInfodataBrandRows(json) {
+  const raw = Array.isArray(json?.data)
+    ? json.data
+    : Array.isArray(json?.items)
+      ? json.items
+      : [];
+  const rows = [];
+  for (const item of raw) {
+    const ent = item?.entity ?? item?.Entity ?? item;
+    if (!ent || typeof ent !== "object") continue;
+    const code = String(ent?.Code ?? ent?.code ?? "").trim();
+    const name = String(ent?.Name ?? ent?.name ?? "").trim();
+    const typ = String(ent?.Type ?? ent?.type ?? "brand").toLowerCase();
+    if (typ && typ !== "brand") continue;
+    if (!code || !name) continue;
+    rows.push({ code, name });
+  }
+  rows.sort((a, b) => a.name.localeCompare(b.name, "ru"));
+  return rows;
+}
+
+/** Обход дерева categories/children бренда — все Entity с Type model. */
+function collectModelCodesFromInfodataNode(node, outSet) {
+  if (!node || typeof node !== "object") return;
+  const ent = node.Entity ?? node.entity;
+  if (ent) {
+    const typ = String(ent.Type ?? ent.type ?? "").toLowerCase();
+    if (typ === "model") {
+      const c = String(ent.Code ?? ent.code ?? "").trim();
+      if (c) outSet.add(c);
+    }
+  }
+  const ch = node.children ?? node.Children;
+  if (Array.isArray(ch)) {
+    for (const x of ch) collectModelCodesFromInfodataNode(x, outSet);
+  }
+}
+
+/** Код бренда → уникальные Code моделей из вложенности infodata/brand. */
+function buildBrandToModelCodesMap(json) {
+  const raw = Array.isArray(json?.data)
+    ? json.data
+    : Array.isArray(json?.items)
+      ? json.items
+      : [];
+  /** @type {Record<string, string[]>} */
+  const map = {};
+  for (const item of raw) {
+    const ent = item?.entity ?? item?.Entity;
+    if (!ent || typeof ent !== "object") continue;
+    const typ = String(ent.Type ?? ent.type ?? "brand").toLowerCase();
+    if (typ !== "brand") continue;
+    const brandCode = String(ent.Code ?? ent.code ?? "").trim();
+    if (!brandCode) continue;
+    const set = new Set();
+    const cats = item.categories ?? item.Categories ?? [];
+    for (const cat of cats) collectModelCodesFromInfodataNode(cat, set);
+    map[brandCode] = Array.from(set).sort();
+  }
+  return map;
+}
+
+/** Ответ GET /api/v2/infodata/model → плоский список { code, name }, только Type model. */
+function parseInfodataModelRows(json) {
+  const raw = Array.isArray(json?.data)
+    ? json.data
+    : Array.isArray(json?.items)
+      ? json.items
+      : [];
+  const rows = [];
+  for (const item of raw) {
+    const ent = item?.entity ?? item?.Entity ?? item;
+    if (!ent || typeof ent !== "object") continue;
+    const code = String(ent?.Code ?? ent?.code ?? "").trim();
+    const name = String(ent?.Name ?? ent?.name ?? "").trim();
+    const typ = String(ent?.Type ?? ent?.type ?? "model").toLowerCase();
+    if (typ && typ !== "model") continue;
+    if (!code || !name) continue;
+    rows.push({ code, name });
+  }
+  rows.sort((a, b) => a.name.localeCompare(b.name, "ru"));
+  return rows;
+}
+
 function Techlist() {
   const [productTitle, setProductTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
@@ -153,6 +235,20 @@ function Techlist() {
   const [description, setDescription] = useState("");
   const [techcardContent, setTechcardContent] = useState([]);
   const [titleImageSrc, setTitleImageSrc] = useState("");
+  /** Бренды из infodata: Code → ключ, Name в списке */
+  const [infodataBrands, setInfodataBrands] = useState([]);
+  const [brandsLoading, setBrandsLoading] = useState(true);
+  const [brandsError, setBrandsError] = useState(null);
+  const [selectedBrandCode, setSelectedBrandCode] = useState("");
+  /** Коды моделей по коду бренда (из дерева infodata/brand) */
+  const [brandToModelCodes, setBrandToModelCodes] = useState({});
+  const [infodataModels, setInfodataModels] = useState([]);
+  const [modelsLoading, setModelsLoading] = useState(true);
+  const [modelsError, setModelsError] = useState(null);
+  const [selectedModelCode, setSelectedModelCode] = useState("");
+  /** Загрузка GET /api/v2/techcard/model/{slug} для активного листа */
+  const [techcardLoading, setTechcardLoading] = useState(false);
+  const [techcardError, setTechcardError] = useState(null);
 
   const contentSections = useMemo(() => {
     if (!Array.isArray(techcardContent)) return [];
@@ -171,24 +267,71 @@ function Techlist() {
       .filter(Boolean);
   }, [techcardContent]);
 
-  const mid = Math.ceil(contentSections.length / 2);
-  const leftSections = contentSections.slice(0, mid);
-  const rightSections = contentSections.slice(mid);
+  /** Заголовок сайдбара: Name блока с code area_application (независимо от наличия текста в колонках). */
+  const areaApplicationTitle = useMemo(() => {
+    if (!Array.isArray(techcardContent)) return "";
+    for (const item of techcardContent) {
+      const code = String(item?.Code ?? item?.code ?? "").toLowerCase();
+      if (code !== "area_application") continue;
+      const title = String(item?.Name ?? item?.name ?? "").trim();
+      if (title) return title;
+    }
+    return "";
+  }, [techcardContent]);
+
+  const modelsForBrand = useMemo(() => {
+    if (!selectedBrandCode) return [];
+    const allowed = brandToModelCodes[selectedBrandCode];
+    if (!allowed?.length) return [];
+    const allow = new Set(allowed);
+    return infodataModels.filter((m) => allow.has(m.code));
+  }, [selectedBrandCode, brandToModelCodes, infodataModels]);
 
   useEffect(() => {
-    let cancelled = false;
+    setSelectedModelCode("");
+  }, [selectedBrandCode]);
+
+  useEffect(() => {
+    const slug = String(selectedModelCode || "").trim();
+    if (!slug) {
+      setProductTitle("");
+      setSubtitle("");
+      setToCode("");
+      setDescription("");
+      setTechcardContent([]);
+      setTitleImageSrc("");
+      setTechcardError(null);
+      setTechcardLoading(false);
+      return;
+    }
+
+    const ac = new AbortController();
     const fetchTechcard = async () => {
       const base = getTechcardApiBase();
       /** Dev: пустой base → `/api` + прокси Vite. Prod: см. `VITE_TECHCARD_API_URL` / `getTechcardApiBase` в apiBase.js. */
+      const pathSlug = encodeURIComponent(slug);
       const url = base
-        ? `${base}/api/v2/techcard/model/${TECHCARD_MODEL_SLUG}`
-        : `/api/v2/techcard/model/${TECHCARD_MODEL_SLUG}`;
+        ? `${base}/api/v2/techcard/model/${pathSlug}`
+        : `/api/v2/techcard/model/${pathSlug}`;
+      setTechcardLoading(true);
+      setTechcardError(null);
       try {
         const response = await fetch(url, {
           headers: { accept: "application/json" },
           mode: "cors",
+          signal: ac.signal,
         });
         const json = await response.json().catch(() => null);
+        if (!response.ok) {
+          const msg =
+            (typeof json?.message === "string" && json.message) ||
+            `Техлист: ошибка ${response.status}`;
+          setTechcardError(msg);
+          if (import.meta.env.DEV) {
+            console.warn("[Techlist] techcard API:", response.status, url, json);
+          }
+          return;
+        }
         const data = json?.data && typeof json.data === "object" ? json.data : json;
         const rawTitle = data?.title ?? json?.title ?? "";
         const title =
@@ -217,35 +360,110 @@ function Techlist() {
           json?.TitleImage ??
           json?.title_image;
         const resolvedImage = resolveTechcardTitleImageUrl(rawTitleImage, base);
-        if (!cancelled && title) {
-          setProductTitle(title);
-        }
-        if (!cancelled && code) {
-          setToCode(code);
-        }
-        if (!cancelled && desc) {
-          setDescription(desc);
-        }
-        if (!cancelled) {
-          setSubtitle(sub);
-          setTechcardContent(sectionsList);
-          setTitleImageSrc(resolvedImage);
-        }
-        if (import.meta.env.DEV && !cancelled && !response.ok) {
-          console.warn(
-            "[Techlist] techcard API:",
-            response.status,
-            url,
-            json
-          );
-        }
+        setProductTitle(title);
+        setToCode(code);
+        setDescription(desc);
+        setSubtitle(sub);
+        setTechcardContent(sectionsList);
+        setTitleImageSrc(resolvedImage);
       } catch (e) {
+        if (e?.name === "AbortError") return;
+        setTechcardError(
+          e?.message || "Не удалось загрузить техлист для модели"
+        );
         if (import.meta.env.DEV) {
           console.warn("[Techlist] techcard fetch failed:", url, e);
         }
+      } finally {
+        if (!ac.signal.aborted) setTechcardLoading(false);
       }
     };
     fetchTechcard();
+    return () => ac.abort();
+  }, [selectedModelCode]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchBrands = async () => {
+      const base = getApiBase();
+      const url = base
+        ? `${base}/api/v2/infodata/brand`
+        : "/api/v2/infodata/brand";
+      try {
+        setBrandsLoading(true);
+        setBrandsError(null);
+        const response = await fetch(url, {
+          headers: { accept: "application/json" },
+          mode: "cors",
+        });
+        const json = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(
+            json?.message || `HTTP ${response.status}`
+          );
+        }
+        const rows = parseInfodataBrandRows(json);
+        const brandModelsMap = buildBrandToModelCodesMap(json);
+        if (!cancelled) {
+          setInfodataBrands(rows);
+          setBrandToModelCodes(brandModelsMap);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setInfodataBrands([]);
+          setBrandToModelCodes({});
+          setBrandsError(
+            e?.message || "Не удалось загрузить список брендов"
+          );
+        }
+        if (import.meta.env.DEV) {
+          console.warn("[Techlist] infodata/brand:", url, e);
+        }
+      } finally {
+        if (!cancelled) setBrandsLoading(false);
+      }
+    };
+    fetchBrands();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchModels = async () => {
+      const base = getApiBase();
+      const url = base
+        ? `${base}/api/v2/infodata/model`
+        : "/api/v2/infodata/model";
+      try {
+        setModelsLoading(true);
+        setModelsError(null);
+        const response = await fetch(url, {
+          headers: { accept: "application/json" },
+          mode: "cors",
+        });
+        const json = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(json?.message || `HTTP ${response.status}`);
+        }
+        const rows = parseInfodataModelRows(json);
+        if (!cancelled) setInfodataModels(rows);
+      } catch (e) {
+        if (!cancelled) {
+          setInfodataModels([]);
+          setModelsError(
+            e?.message || "Не удалось загрузить список моделей"
+          );
+        }
+        if (import.meta.env.DEV) {
+          console.warn("[Techlist] infodata/model:", url, e);
+        }
+      } finally {
+        if (!cancelled) setModelsLoading(false);
+      }
+    };
+    fetchModels();
     return () => {
       cancelled = true;
     };
@@ -253,6 +471,86 @@ function Techlist() {
 
   return (
     <div className={styles.page}>
+      {/* Вне макета листа (.sheet): бренды и модели по infodata */}
+      <div className={styles.brandsBar}>
+        <div className={styles.brandsBarGroup}>
+          <label
+            htmlFor="techlist-brand-select"
+            className={styles.brandsBarLabel}
+          >
+            Бренд
+          </label>
+          {brandsLoading && (
+            <span className={styles.brandsMeta}>Загрузка…</span>
+          )}
+          {!brandsLoading && brandsError && (
+            <span className={styles.brandsError} role="alert">
+              {brandsError}
+            </span>
+          )}
+          {!brandsLoading && !brandsError && (
+            <select
+              id="techlist-brand-select"
+              className={styles.brandsSelect}
+              value={selectedBrandCode}
+              onChange={(e) => setSelectedBrandCode(e.target.value)}
+            >
+              <option value="">Выберите бренд</option>
+              {infodataBrands.map((b) => (
+                <option key={b.code} value={b.code}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        <div className={styles.brandsBarGroup}>
+          <label
+            htmlFor="techlist-model-select"
+            className={styles.brandsBarLabel}
+          >
+            Модель
+          </label>
+          {!selectedBrandCode ? (
+            <span className={styles.brandsMeta}>Сначала выберите бренд</span>
+          ) : modelsLoading ? (
+            <span className={styles.brandsMeta}>Загрузка моделей…</span>
+          ) : modelsError ? (
+            <span className={styles.brandsError} role="alert">
+              {modelsError}
+            </span>
+          ) : (
+            <select
+              id="techlist-model-select"
+              className={styles.brandsSelect}
+              value={selectedModelCode}
+              onChange={(e) => setSelectedModelCode(e.target.value)}
+              disabled={modelsForBrand.length === 0}
+            >
+              <option value="">
+                {modelsForBrand.length === 0
+                  ? "Нет моделей для этого бренда"
+                  : "Выберите модель"}
+              </option>
+              {modelsForBrand.map((m) => (
+                <option key={m.code} value={m.code}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+          )}
+          {techcardLoading && (
+            <span className={styles.brandsMeta}>Загрузка техлиста…</span>
+          )}
+          {techcardError && (
+            <span className={styles.brandsError} role="alert">
+              {techcardError}
+            </span>
+          )}
+        </div>
+      </div>
+
       <div className={styles.sheetWrap}>
         <article
           className={styles.sheet}
@@ -268,11 +566,16 @@ function Techlist() {
             </div>
             <aside
               className={`${styles.sideBar} ${styles.block}`}
-              aria-label="Акустика помещений, QR-код"
+              aria-label={
+                areaApplicationTitle
+                  ? `${areaApplicationTitle}, QR-код`
+                  : "Акустика помещений, QR-код"
+              }
             >
               <div className={styles.sideBarBottomStack}>
-                <div className={styles.sideFooter}>АКУСТИКА ПОМЕЩЕНИЙ</div>
-               
+                <div className={styles.sideFooter}>
+                  {(areaApplicationTitle || "Акустика помещений").toUpperCase()}
+                </div>
               </div>
               <div className={styles.sideQr} title="QR-код">
                   <QrInSidebar />
@@ -313,38 +616,28 @@ function Techlist() {
                   )}
                 </div>
               </div>
-              <img
-                className={styles.productImg}
-                src={titleImageSrc || productPhoto}
-                alt={productTitle || "Панели Акуфон НГ Стандарт"}
-                decoding="async"
-              />
+              {titleImageSrc ? (
+                <img
+                  className={styles.productImg}
+                  src={titleImageSrc}
+                  alt={productTitle || "Панели Акуфон НГ Стандарт"}
+                  decoding="async"
+                />
+              ) : (
+                <div className={styles.productImgPlaceholder} aria-hidden />
+              )}
             </div>
 
             <div className={styles.grid}>
-              <div className={`${styles.col} ${styles.colLeft}`}>
-                {leftSections.map((s) => (
-                  <Section
-                    key={s.key}
-                    icon={iconForTechcardCode(s.code)}
-                    title={s.title}
-                    text={s.text}
-                    markdownComponents={techIntroMarkdownComponents}
-                  />
-                ))}
-              </div>
-
-              <div className={`${styles.col} ${styles.colRight}`}>
-                {rightSections.map((s) => (
-                  <Section
-                    key={s.key}
-                    icon={iconForTechcardCode(s.code)}
-                    title={s.title}
-                    text={s.text}
-                    markdownComponents={techIntroMarkdownComponents}
-                  />
-                ))}
-              </div>
+              {contentSections.map((s) => (
+                <Section
+                  key={s.key}
+                  icon={iconForTechcardCode(s.code)}
+                  title={s.title}
+                  text={s.text}
+                  markdownComponents={techIntroMarkdownComponents}
+                />
+              ))}
             </div>
 
             <footer className={`${styles.footer} ${styles.block}`}>

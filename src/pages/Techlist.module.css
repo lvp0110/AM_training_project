@@ -8,6 +8,46 @@
   min-height: 100%;
 }
 
+/* Панель брендов над листом — не внутри .sheet (макет A4 в Figma) */
+.brandsBar {
+  max-width: 595px;
+  margin: 0 auto 1rem;
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  padding: 0 0.25rem;
+  box-sizing: border-box;
+}
+
+.brandsBarGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: min(100%, 240px);
+}
+
+.brandsBarLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.2;
+}
+
+.brandsSelect {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.9375rem;
+  border-radius: 6px;
+  border: 1px solid #c5c9ce;
+  background: #fff;
+  color: #1a1a1a;
+}
+
 .sheetWrap {
   display: flex;
   justify-content: center;
@@ -264,38 +304,46 @@
   justify-self: end;
 }
 
+/* Пустой слот той же ширины/высоты, что и картинка (max-height слота). */
+.productImgPlaceholder {
+  width: 100%;
+  max-width: 100%;
+  min-height: 130px;
+  max-height: 130px;
+  align-self: start;
+  justify-self: end;
+}
+
+.brandsMeta {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #6f6f6f;
+}
+
+.brandsError {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #c62828;
+}
+
 .intro {
   margin: 0;
   font-size: 9px;
 }
 
-/* Две равные колонки как в макете */
+/*
+ * Две колонки: контент идёт по порядку; целые секции переносятся во вторую колонку
+ * (column-fill: balance + break-inside на .section), чтобы не копить всё в одной стороне.
+ */
 .grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  column-gap: 12px;
   flex: 1;
   min-height: 0;
   min-width: 0;
   overflow: hidden;
-}
-
-.col {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  min-width: 0;
-}
-
-.colLeft {
-  gap: 25px;
-  padding-right: 10px;
-  border-right: 1px solid var(--blue);
-}
-
-.colRight {
-  gap: 25px;
-  padding-left: 10px;
+  column-count: 2;
+  column-gap: 12px;
+  column-rule: 1px solid var(--blue);
+  column-fill: balance;
 }
 
 .section {
@@ -303,6 +351,10 @@
   gap: 6px;
   align-items: flex-start;
   min-width: 0;
+  margin-bottom: 25px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
 }
 
 /* Иконки секций ~20–21px по референсу */
