@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { getApiBase } from "../apiBase.js";
+import { getTechcardApiBase } from "../apiBase.js";
 import styles from "./Techlist.module.css";
 import productPhoto from "../assets/techlist-product.png";
 import headerLogo from "../assets/acoustic-group-logo.png";
@@ -100,6 +100,26 @@ function QrInSidebar() {
 
 const TECHCARD_MODEL_SLUG = "100gidro";
 
+/** URL картинки из API: строка, массив, объект с url/src или относительный путь. */
+function resolveTechcardTitleImageUrl(raw, apiBase) {
+  if (raw == null) return "";
+  if (Array.isArray(raw) && raw.length > 0) {
+    return resolveTechcardTitleImageUrl(raw[0], apiBase);
+  }
+  let path = "";
+  if (typeof raw === "string") {
+    path = raw.trim();
+  } else if (typeof raw === "object") {
+    const v = raw.url ?? raw.src ?? raw.URL ?? raw.Src;
+    path = typeof v === "string" ? v.trim() : "";
+  }
+  if (!path) return "";
+  if (/^https?:\/\//i.test(path)) return path;
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  const base = (apiBase || "").replace(/\/$/, "");
+  return base ? `${base}${normalized}` : normalized;
+}
+
 const techIntroMarkdownComponents = {
   p: ({ node, ...props }) => <p {...props} />,
   strong: ({ node, ...props }) => <strong {...props} />,
@@ -132,6 +152,7 @@ function Techlist() {
   const [toCode, setToCode] = useState("");
   const [description, setDescription] = useState("");
   const [techcardContent, setTechcardContent] = useState([]);
+  const [titleImageSrc, setTitleImageSrc] = useState("");
 
   const contentSections = useMemo(() => {
     if (!Array.isArray(techcardContent)) return [];
@@ -157,8 +178,8 @@ function Techlist() {
   useEffect(() => {
     let cancelled = false;
     const fetchTechcard = async () => {
-      const base = getApiBase();
-      /** Dev: пустой base → `/api` и прокси Vite. Production (в т.ч. GitHub Pages): абсолютный URL из env или src/apiBase.js. */
+      const base = getTechcardApiBase();
+      /** Dev: пустой base → `/api` + прокси Vite. Prod: см. `VITE_TECHCARD_API_URL` / `getTechcardApiBase` в apiBase.js. */
       const url = base
         ? `${base}/api/v2/techcard/model/${TECHCARD_MODEL_SLUG}`
         : `/api/v2/techcard/model/${TECHCARD_MODEL_SLUG}`;
@@ -188,6 +209,14 @@ function Techlist() {
           typeof rawSubtitle === "string" ? rawSubtitle.trim() : "";
         const rawSections = data?.content ?? json?.content;
         const sectionsList = Array.isArray(rawSections) ? rawSections : [];
+        const rawTitleImage =
+          data?.titleImage ??
+          data?.TitleImage ??
+          data?.title_image ??
+          json?.titleImage ??
+          json?.TitleImage ??
+          json?.title_image;
+        const resolvedImage = resolveTechcardTitleImageUrl(rawTitleImage, base);
         if (!cancelled && title) {
           setProductTitle(title);
         }
@@ -200,6 +229,7 @@ function Techlist() {
         if (!cancelled) {
           setSubtitle(sub);
           setTechcardContent(sectionsList);
+          setTitleImageSrc(resolvedImage);
         }
         if (import.meta.env.DEV && !cancelled && !response.ok) {
           console.warn(
@@ -285,8 +315,9 @@ function Techlist() {
               </div>
               <img
                 className={styles.productImg}
-                src={productPhoto}
-                alt="Панели Акуфон НГ Стандарт"
+                src={titleImageSrc || productPhoto}
+                alt={productTitle || "Панели Акуфон НГ Стандарт"}
+                decoding="async"
               />
             </div>
 

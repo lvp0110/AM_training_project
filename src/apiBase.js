@@ -11,3 +11,16 @@ export function getApiBase() {
   if (import.meta.env.PROD) return PRODUCTION_API_DEFAULT;
   return "";
 }
+
+/**
+ * Базовый URL для `/api/v2/techcard/...`.
+ * Если задан `VITE_TECHCARD_API_URL`, используется он (например, когда общий `VITE_API_URL`
+ * указывает на хост без маршрута techcard — на dev3 `/api/v2/botservice/*` есть, а techcard отдаёт 404).
+ */
+export function getTechcardApiBase() {
+  const dedicated = (import.meta.env.VITE_TECHCARD_API_URL || "")
+    .trim()
+    .replace(/\/$/, "");
+  if (dedicated) return dedicated;
+  return getApiBase();
+}

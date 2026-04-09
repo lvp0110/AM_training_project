@@ -35,6 +35,8 @@ jobs:
         env:
           # Прокси Vite на Pages нет — нужен абсолютный URL (см. src/apiBase.js).
           VITE_API_URL: ${{ secrets.VITE_API_URL != '' && secrets.VITE_API_URL || 'https://dev3.constrtodo.ru:3005' }}
+          # Опционально: хост, где развёрнут `/api/v2/techcard/*` (на dev3 этот путь сейчас 404).
+          VITE_TECHCARD_API_URL: ${{ secrets.VITE_TECHCARD_API_URL }}
 
       - name: Verify build output
         run: |

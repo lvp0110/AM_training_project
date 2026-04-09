@@ -104,6 +104,8 @@
   min-height: 0;
   padding: 10px 5px 8px;
   box-sizing: border-box;
+  border-right: solid var(--blue-light);
+  margin: 25px 0;
 }
 
 .sideQr {
@@ -175,7 +177,7 @@
 
 .logoImg {
   display: block;
-  height: 32px;
+  height: 40px;
   width: auto;
   max-width: min(100%, 220px);
   object-fit: contain;
@@ -256,7 +258,7 @@
   max-width: 100%;
   height: auto;
   max-height: 130px;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center top;
   align-self: start;
   justify-self: end;
@@ -286,13 +288,13 @@
 }
 
 .colLeft {
-  gap: 15px;
+  gap: 25px;
   padding-right: 10px;
   border-right: 1px solid var(--blue);
 }
 
 .colRight {
-  gap: 15px;
+  gap: 25px;
   padding-left: 10px;
 }
 

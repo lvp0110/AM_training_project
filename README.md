@@ -111,6 +111,8 @@ npm run preview
 3. **Настройка API URL для production:**
    
    Для работы API в production необходимо указать URL вашего API сервера. Есть два способа:
+
+   **Техкарта (`/api/v2/techcard/...`):** на `https://dev3.constrtodo.ru:3005` общие маршруты (например `botservice`) отвечают, а путь `techcard` сейчас отдаёт **404**. Страница «Техлист» берёт хост из `VITE_TECHCARD_API_URL`, если он задан, иначе — тот же базовый URL, что и остальные запросы (`VITE_API_URL` / `src/apiBase.js`). Чтобы техкарта работала с GitHub Pages, укажите в **Secrets** переменную `VITE_TECHCARD_API_URL` на.origin, где реально развёрнут techcard (тот же формат без завершающего `/`, что и для `VITE_API_URL`).
    
    **Способ 1: Через GitHub Secrets (рекомендуется)**
    - Перейдите в Settings → Secrets and variables → Actions
