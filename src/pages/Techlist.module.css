@@ -273,7 +273,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  margin: 25px 0;
+  margin: 20px 0;
   min-width: 0;
 }
 
@@ -285,19 +285,19 @@
 
 .logoImg {
   display: block;
-  height: 40px;
+  height: 45px;
   width: auto;
   max-width: min(100%, 220px);
   object-fit: contain;
 }
 
 .meta {
-  font-size: 8px;
+  font-size: 10px;
   color: var(--text-muted);
   text-align: right;
-  max-width: 200px;
+  width: auto;
   white-space: nowrap;
-  border-bottom: #009ee3 solid 2px;
+  border-bottom: #009ee3 solid 1px;
 }
 
 .topBand {
@@ -315,7 +315,7 @@
 
 .productName {
   margin: 0 0 2px;
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 800;
   color: var(--blue);
   letter-spacing: -0.02em;
@@ -323,9 +323,10 @@
 
 .subtitle {
   margin: 0 0 3px;
-  font-size: 10px;
+  font-size: 16px;
   font-weight: 400;
   color: var(--blue-light);
+  opacity: .8;
 }
 
 .tu {
@@ -365,7 +366,7 @@
   width: 100%;
   max-width: 100%;
   height: auto;
-  max-height: 130px;
+  max-height: 180px;
   object-fit: contain;
   object-position: center top;
   align-self: start;
@@ -420,7 +421,7 @@
   gap: 8px;
   align-items: stretch;
   min-width: 0;
-  margin-bottom: 25px;
+  margin-bottom: 10px;
   break-inside: avoid;
   page-break-inside: avoid;
   -webkit-column-break-inside: avoid;
@@ -459,7 +460,7 @@
 }
 
 .sectionTitle {
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 800;
   color: var(--text);
   text-transform: uppercase;
