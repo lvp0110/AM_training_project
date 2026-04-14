@@ -2,59 +2,31 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { getApiBase } from "../apiBase.js";
+import styles from "./About.module.css";
 
-// Стили для списков и таблиц (глобальный reset в App.css убирает margin/padding)
 const markdownListTableComponents = {
   ul: ({ node, ...props }) => (
-    <ul
-      style={{ margin: "0.5em 0", paddingLeft: "1.5em", listStyleType: "disc" }}
-      {...props}
-    />
+    <ul className={styles.mdUl} {...props} />
   ),
   ol: ({ node, ...props }) => (
-    <ol
-      style={{
-        margin: "0.5em 0",
-        paddingLeft: "1.5em",
-        listStyleType: "decimal",
-      }}
-      {...props}
-    />
+    <ol className={styles.mdOl} {...props} />
   ),
-  li: ({ node, ...props }) => <li style={{ margin: "0.25em 0" }} {...props} />,
+  li: ({ node, ...props }) => <li className={styles.mdLi} {...props} />,
   table: ({ node, ...props }) => (
-    <div style={{ overflowX: "auto", margin: "1em 0" }}>
-      <table
-        style={{
-          borderCollapse: "collapse",
-          width: "100%",
-          border: "1px solid #ddd",
-        }}
-        {...props}
-      />
+    <div className={styles.mdTableWrap}>
+      <table className={styles.mdTable} {...props} />
     </div>
   ),
   thead: ({ node, ...props }) => (
-    <thead style={{ backgroundColor: "#f5f5f5" }} {...props} />
+    <thead className={styles.mdThead} {...props} />
   ),
   tbody: ({ node, ...props }) => <tbody {...props} />,
   tr: ({ node, ...props }) => <tr {...props} />,
   th: ({ node, ...props }) => (
-    <th
-      style={{
-        border: "1px solid #ddd",
-        padding: "0.5em 0.75em",
-        textAlign: "left",
-        fontWeight: 600,
-      }}
-      {...props}
-    />
+    <th className={styles.mdTh} {...props} />
   ),
   td: ({ node, ...props }) => (
-    <td
-      style={{ border: "1px solid #ddd", padding: "0.5em 0.75em" }}
-      {...props}
-    />
+    <td className={styles.mdTd} {...props} />
   ),
 };
 
@@ -400,81 +372,49 @@ function About() {
   }, [selectedTopic, sections, sectionsViewMode]);
 
   return (
-    <div style={{ padding: " 0 2rem" }}>
+    <div className={styles.page}>
       {/* <h2>Материалы</h2> */}
-      <div style={{ textAlign: "right" }}>
+      <div className={styles.panelLinkWrap}>
         <a
           href="https://content.constrtodo.ru:3444/"
           target="_blank"
           rel="noopener noreferrer"
-          style={{
-            display: "inline-block",
-            textDecoration: "none",
-          }}
+          className={styles.panelLink}
         >
           <img
             src="./Panel.png"
             alt="Перейти в панель управления"
-            style={{
-              maxWidth: "70px",
-              height: "auto",
-              cursor: "pointer",
-              transition: "opacity 0.3s, transform 0.3s",
-              transform: "scale(1)",
-              background:
-                "radial-gradient(circle 65px at center, rgba(227, 228, 230, 0.1), rgba(227, 228, 230, 0.6))",
-              borderRadius: 6,
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.opacity = "0.8";
-              e.target.style.transform = "scale(1.15)";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.opacity = "1";
-              e.target.style.transform = "scale(1)";
-            }}
+            className={styles.panelImg}
           />
         </a>
       </div>
       <p>Список наших материалов и информация о них</p>
       {loading && <p>Загрузка...</p>}
       {error && (
-        <div style={{ color: "red", marginBottom: "1rem" }}>
+        <div className={styles.errorBox}>
           <p>Ошибка: {error}</p>
           {import.meta.env.PROD ? (
-            <div
-              style={{ fontSize: "0.9rem", color: "#666", marginTop: "0.5rem" }}
-            >
+            <div className={styles.errorHint}>
               <p>
                 Для работы API необходимо настроить переменную окружения
                 VITE_API_URL.
               </p>
               <p>Создайте файл .env.production с содержимым:</p>
-              <code
-                style={{
-                  display: "block",
-                  padding: "0.5rem",
-                  backgroundColor: "#f5f5f5",
-                  borderRadius: "4px",
-                  marginTop: "0.5rem",
-                }}
-              >
+              <code className={styles.errorCode}>
                 VITE_API_URL=https://your-api-server.com
               </code>
             </div>
           ) : (
-            <p style={{ fontSize: "0.9rem", color: "#666" }}>
+            <p className={styles.errorHintPlain}>
               Проверьте, что API сервер запущен на http://localhost:3005
             </p>
           )}
         </div>
       )}
       {!loading && !error && brands.length === 0 && (
-        <p style={{ color: "#666" }}>Бренды не найдены</p>
+        <p className={styles.muted}>Бренды не найдены</p>
       )}
-      <div
-        style={{ display: "flex", flexWrap: "wrap", flexDirection: "column" }}
-      >
+      <div className={styles.controlsRow}>
         <select
           name="brand"
           id="brand"
@@ -484,15 +424,7 @@ function About() {
             setSelectedTopic("");
             setExpandedSections(new Set());
           }}
-          style={{
-            width: "100%",
-            maxWidth: "400px",
-            padding: "0.5rem",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            fontSize: "1rem",
-            marginTop: "1rem",
-          }}
+          className={styles.select}
           disabled={loading || error || brands.length === 0}
         >
           <option value="">Выберите бренд</option>
@@ -520,7 +452,7 @@ function About() {
         {selectedBrand && (
           <>
             {topicsLoading && (
-              <p style={{ marginTop: "0.5rem", color: "#666" }}>
+              <p className={styles.topicsLoading}>
                 {(() => {
                   // Если выбран раздел, показываем его название
                   if (selectedTopic) {
@@ -574,13 +506,7 @@ function About() {
               </p>
             )}
             {topicsError && (
-              <div
-                style={{
-                  color: "red",
-                  marginTop: "0.5rem",
-                  fontSize: "0.9rem",
-                }}
-              >
+              <div className={styles.topicsError}>
                 Ошибка загрузки разделов: {topicsError}
               </div>
             )}
@@ -591,15 +517,7 @@ function About() {
                 setSelectedTopic(val);
                 if (val) openSection(val);
               }}
-              style={{
-                width: "100%",
-                maxWidth: "400px",
-                padding: "0.5rem",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-                fontSize: "1rem",
-                marginTop: "1rem",
-              }}
+              className={styles.select}
               disabled={topicsLoading || topicsError || topics.length === 0}
             >
               <option value="">Все разделы</option>
@@ -629,18 +547,10 @@ function About() {
         )}
       </div>
       {selectedBrand && (
-        <div
-          style={{
-            marginTop: "1rem",
-            padding: "2rem",
-            border: "1px solid #ddd",
-            borderRadius: "4px",
-            backgroundColor: "#f9f9f9",
-          }}
-        >
+        <div className={styles.contentPanel}>
           {loadingContent && <p>Загрузка всех разделов...</p>}
           {contentError && (
-            <div style={{ color: "red", marginTop: "0.5rem" }}>
+            <div className={styles.contentError}>
               <p>Ошибка загрузки информации: {contentError}</p>
             </div>
           )}
@@ -648,13 +558,7 @@ function About() {
             !contentError &&
             !selectedTopic &&
             brandContent && (
-              <div
-                style={{
-                  color: "#333",
-                  marginTop: "0.5rem",
-                  lineHeight: "1.6",
-                }}
-              >
+              <div className={styles.markdownBody}>
                 <Markdown
                   remarkPlugins={[remarkGfm]}
                   components={{
@@ -674,14 +578,7 @@ function About() {
                         <h2
                           role="button"
                           tabIndex={0}
-                          style={{
-                            color: "#0d47a1",
-                            marginTop: "1.25rem",
-                            marginBottom: "0.5rem",
-                            paddingBottom: "0.25rem",
-                            borderBottom: "2px solid #0d47a1",
-                            cursor: "pointer",
-                          }}
+                          className={styles.mdH2}
                           onClick={handleClick}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" || e.key === " ") {
@@ -694,20 +591,10 @@ function About() {
                       );
                     },
                     h3: ({ node, ...props }) => (
-                      <h3
-                        style={{ color: "#1565c0", marginTop: "0.75rem" }}
-                        {...props}
-                      />
+                      <h3 className={styles.mdH3} {...props} />
                     ),
                     h4: ({ node, ...props }) => (
-                      <h4
-                        style={{
-                          color: "#1565c0",
-                          marginTop: "0.7rem",
-                          borderBottom: "1px solid #0d47a1",
-                        }}
-                        {...props}
-                      />
+                      <h4 className={styles.mdH4} {...props} />
                     ),
                   }}
                 >
@@ -719,8 +606,14 @@ function About() {
             !contentError &&
             selectedTopic &&
             sections.length > 0 && (
-              <>
-                <div style={{ marginTop: "0.5rem", marginBottom: "0.5rem" }}>
+              <div
+                className={`${styles.contentPanelSections} ${
+                  sectionsViewMode === "horizontal"
+                    ? styles.contentPanelSectionsGrid
+                    : styles.contentPanelSectionsVertical
+                }`}
+              >
+                <div className={styles.viewToggleWrap}>
                   <button
                     type="button"
                     disabled={isSmallScreen}
@@ -739,26 +632,13 @@ function About() {
                         return next;
                       });
                     }}
-                    style={{
-                      padding: "0.5rem 1rem",
-                      fontSize: "0.95rem",
-                      cursor: isSmallScreen ? "not-allowed" : "pointer",
-                      border: "1px solid #0d47a1",
-                      borderRadius: "4px",
-                      backgroundColor: isSmallScreen
-                        ? "#f0f0f0"
+                    className={`${styles.viewToggle} ${
+                      isSmallScreen
+                        ? styles.viewToggleDisabled
                         : sectionsViewMode === "horizontal"
-                        ? "#0d47a1"
-                        : "#fff",
-                      color: isSmallScreen
-                        ? "#999"
-                        : sectionsViewMode === "horizontal"
-                        ? "#fff"
-                        : "#0d47a1",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
+                          ? styles.viewToggleActive
+                          : styles.viewToggleInactive
+                    }`}
                     aria-label={
                       isSmallScreen
                         ? "На этом экране доступен только вид списком"
@@ -806,20 +686,11 @@ function About() {
                   </button>
                 </div>
                 <div
-                  style={{
-                    color: "#333",
-                    marginTop: "0.5rem",
-                    lineHeight: "1.6",
-                    ...(sectionsViewMode === "horizontal"
-                      ? {
-                          display: "grid",
-                          // gridTemplateColumns: `repeat(${sections.length}, minmax(280px, 1fr))`,
-                          gridTemplateColumns: `repeat(3, minmax(280px, 1fr))`,
-                          gap: "1rem",
-                          overflowX: "auto",
-                        }
-                      : {}),
-                  }}
+                  className={`${styles.sectionsRoot} ${
+                    sectionsViewMode === "horizontal"
+                      ? styles.sectionsRootGrid
+                      : ""
+                  }`}
                 >
                   {sections.map((section) => {
                     const key = String(section.topicValue);
@@ -833,19 +704,15 @@ function About() {
                         ref={(el) => {
                           sectionRefs.current[key] = el;
                         }}
-                        style={{
-                          border: "1px solid #e0e0e0",
-                          borderRadius: "8px",
-                          overflow: "hidden",
-                          backgroundColor: isExpanded ? "#fff" : "#fafafa",
-                          ...(sectionsViewMode === "vertical"
-                            ? { marginBottom: "1.5rem" }
-                            : {
-                                minWidth: 0,
-                                display: "flex",
-                                flexDirection: "column",
-                              }),
-                        }}
+                        className={`${styles.sectionCard} ${
+                          isExpanded
+                            ? styles.sectionCardExpanded
+                            : styles.sectionCardCollapsed
+                        } ${
+                          sectionsViewMode === "vertical"
+                            ? styles.sectionCardVertical
+                            : styles.sectionCardHorizontal
+                        }`}
                       >
                         <h2
                           role={isVertical ? "button" : undefined}
@@ -865,60 +732,40 @@ function About() {
                                 }
                               : undefined
                           }
-                          style={{
-                            margin: 0,
-                            padding: "1rem 1.25rem",
-                            color: "#0d47a1",
-                            borderBottom: isExpanded
-                              ? "2px solid #0d47a1"
-                              : "none",
-                            cursor: isVertical ? "pointer" : "default",
-                            fontSize: "1.25rem",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            flexShrink: 0,
-                          }}
+                          className={`${styles.sectionTitle} ${
+                            isVertical
+                              ? styles.sectionTitleClickable
+                              : styles.sectionTitleStatic
+                          } ${
+                            isExpanded
+                              ? styles.sectionTitleBorderOn
+                              : styles.sectionTitleBorderOff
+                          }`}
                         >
                           <span>{section.topicName}</span>
                           {isVertical && (
-                            <span style={{ fontSize: "1rem", opacity: 0.8 }}>
+                            <span className={styles.sectionChevron}>
                               {isExpanded ? "▼" : "▶"}
                             </span>
                           )}
                         </h2>
                         {isExpanded && (
                           <div
-                            style={{
-                              padding: "1rem 2.1rem",
-                              borderTop: "1px solid #eee",
-                              ...(sectionsViewMode === "horizontal"
-                                ? { overflowY: "auto", flex: 1, minHeight: 0 }
-                                : {}),
-                            }}
+                            className={`${styles.sectionBody} ${
+                              sectionsViewMode === "horizontal"
+                                ? styles.sectionBodyHorizontal
+                                : ""
+                            }`}
                           >
                             <Markdown
                               remarkPlugins={[remarkGfm]}
                               components={{
                                 ...markdownListTableComponents,
                                 h3: ({ node, ...props }) => (
-                                  <h3
-                                    style={{
-                                      color: "#1565c0",
-                                      marginTop: "0.75rem",
-                                    }}
-                                    {...props}
-                                  />
+                                  <h3 className={styles.mdH3} {...props} />
                                 ),
                                 h4: ({ node, ...props }) => (
-                                  <h4
-                                    style={{
-                                      color: "#1565c0",
-                                      marginTop: "0.7rem",
-                                      borderBottom: "1px solid #0d47a1",
-                                    }}
-                                    {...props}
-                                  />
+                                  <h4 className={styles.mdH4} {...props} />
                                 ),
                               }}
                             >
@@ -930,13 +777,13 @@ function About() {
                     );
                   })}
                 </div>
-              </>
+              </div>
             )}
           {!loadingContent &&
             !contentError &&
             !brandContent &&
             sections.length === 0 && (
-              <div style={{ color: "#666", marginTop: "0.5rem" }}>
+              <div className={styles.emptyState}>
                 <p>Информация по разделам не найдена.</p>
               </div>
             )}

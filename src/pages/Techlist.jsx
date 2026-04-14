@@ -74,9 +74,11 @@ function Section({ icon, title, text, markdownComponents }) {
   if (!body) return null;
   return (
     <div className={`${styles.section} ${styles.block}`}>
-      <div className={styles.iconBox}>{icon}</div>
-      <div className={styles.sectionBody}>
+      <div className={styles.sectionHeader}>
+        <div className={styles.iconBox}>{icon}</div>
         <div className={styles.sectionTitle}>{title}</div>
+      </div>
+      <div className={styles.sectionBody}>
         <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
           {body}
         </Markdown>

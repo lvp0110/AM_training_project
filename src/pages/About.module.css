@@ -1,0 +1,332 @@
+/* Страница «Контент» / About */
+
+.page {
+  padding: 0 2rem;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.panelLinkWrap {
+  text-align: right;
+}
+
+.panelLink {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.panelImg {
+  max-width: 70px;
+  height: auto;
+  cursor: pointer;
+  transition: opacity 0.3s, transform 0.3s;
+  transform: scale(1);
+  background: radial-gradient(
+    circle 65px at center,
+    rgba(227, 228, 230, 0.1),
+    rgba(227, 228, 230, 0.6)
+  );
+  border-radius: 6px;
+}
+
+.panelImg:hover {
+  opacity: 0.8;
+  transform: scale(1.15);
+}
+
+.errorBox {
+  color: red;
+  margin-bottom: 1rem;
+}
+
+.errorHint {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 0.5rem;
+}
+
+.errorHintPlain {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.errorCode {
+  display: block;
+  padding: 0.5rem;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+}
+
+.muted {
+  color: #666;
+}
+
+.controlsRow {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+}
+
+.select {
+  width: 100%;
+  max-width: 400px;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  margin-top: 1rem;
+}
+
+.topicsLoading {
+  margin-top: 0.5rem;
+  color: #666;
+}
+
+.topicsError {
+  color: red;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.contentPanel {
+  margin-top: 1rem;
+  padding: 2rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+@media (max-width: 374px) {
+  .contentPanel {
+    padding: 1rem;
+  }
+}
+.contentError {
+  color: red;
+  margin-top: 0.5rem;
+}
+
+.markdownBody {
+  color: #333;
+  margin-top: 0.5rem;
+  line-height: 1.6;
+}
+
+.contentPanelSections {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Вертикальный список: высота по контенту, страница скроллится как обычно. */
+.contentPanelSectionsVertical {
+  flex: 0 0 auto;
+}
+
+/* Сетка: занимаем оставшееся место в панели, чтобы колонки имели фиксированную «высоту листа». */
+.contentPanelSectionsGrid {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.viewToggleWrap {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-shrink: 0;
+}
+
+.viewToggle {
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  border: 1px solid #0d47a1;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.viewToggleActive {
+  cursor: pointer;
+  background-color: #0d47a1;
+  color: #fff;
+}
+
+.viewToggleInactive {
+  cursor: pointer;
+  background-color: #fff;
+  color: #0d47a1;
+}
+
+.viewToggleDisabled {
+  cursor: not-allowed;
+  background-color: #f0f0f0;
+  color: #999;
+}
+
+.sectionsRoot {
+  color: #333;
+  margin-top: 0.5rem;
+  line-height: 1.6;
+}
+
+/* Колоночная вёрстка: контент секций перетекает в соседние колонки
+   в пределах высоты области над футером (как «лист»).
+   Явный cap по dvh + height:100% у родителя с flex — иначе блок растягивается вниз. */
+.sectionsRootGrid {
+  --about-sheet-gap: 17rem;
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  max-height: min(100%, calc(100dvh - var(--about-sheet-gap)));
+  column-width: min(100%, 320px);
+  column-gap: 1rem;
+  column-fill: auto;
+  overflow: auto;
+  padding-bottom: 0.25rem;
+}
+
+.sectionCard {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.sectionCardExpanded {
+  background-color: #fff;
+}
+
+.sectionCardCollapsed {
+  background-color: #fafafa;
+}
+
+.sectionCardVertical {
+  margin-bottom: 1.5rem;
+}
+
+.sectionCardHorizontal {
+  min-width: 0;
+  display: block;
+  break-inside: auto;
+  overflow: visible;
+}
+
+.sectionTitle {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  color: #0d47a1;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.sectionTitleClickable {
+  cursor: pointer;
+}
+
+.sectionTitleStatic {
+  cursor: default;
+}
+
+.sectionTitleBorderOn {
+  border-bottom: 2px solid #0d47a1;
+}
+
+.sectionTitleBorderOff {
+  border-bottom: none;
+}
+
+.sectionChevron {
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
+.sectionBody {
+  padding: 1rem 2.1rem;
+  border-top: 1px solid #eee;
+}
+
+.sectionBodyHorizontal {
+  overflow: visible;
+  break-inside: auto;
+}
+
+.emptyState {
+  color: #666;
+  margin-top: 0.5rem;
+}
+
+/* --- Markdown (react-markdown) --- */
+
+.mdUl {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+  list-style-type: disc;
+}
+
+.mdOl {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+  list-style-type: decimal;
+}
+
+.mdLi {
+  margin: 0.25em 0;
+}
+
+.mdTableWrap {
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.mdTable {
+  border-collapse: collapse;
+  width: 100%;
+  border: 1px solid #ddd;
+}
+
+.mdThead {
+  background-color: #f5f5f5;
+}
+
+.mdTh {
+  border: 1px solid #ddd;
+  padding: 0.5em 0.75em;
+  text-align: left;
+  font-weight: 600;
+}
+
+.mdTd {
+  border: 1px solid #ddd;
+  padding: 0.5em 0.75em;
+}
+
+.mdH2 {
+  color: #0d47a1;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 2px solid #0d47a1;
+  cursor: pointer;
+}
+
+.mdH3 {
+  color: #1565c0;
+  margin-top: 0.75rem;
+}
+
+.mdH4 {
+  color: #1565c0;
+  margin-top: 0.7rem;
+  border-bottom: 1px solid #0d47a1;
+}
