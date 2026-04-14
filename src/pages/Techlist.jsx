@@ -567,7 +567,10 @@ function Techlist() {
               >
                 <div className={`${styles.sideBarColumn} ${styles.block}`}>
                 <div className={`${styles.sideBarTop} ${styles.block}`}>
-                  <div className={styles.sideTitle}>{productTitle || "\u00A0"}</div>
+                  <div className={styles.sideBarTopTitleWrap}>
+                    <div className={styles.sideTitle}>{productTitle || "\u00A0"}</div>
+                  </div>
+                  <div className={styles.sideBarTopArcs} aria-hidden />
                 </div>
                 <aside
                   className={`${styles.sideBar} ${styles.block}`}
