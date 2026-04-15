@@ -124,8 +124,8 @@
 
 .sheet {
   --sheet-w: 595px;
-  --blue: #009ee3;
-  --blue-light: #4db6e8;
+  --blue: #00A8E3;
+  --blue-light: #00A8E3;
   --text: #1a1a1a;
   --text-muted: #6f6f6f;
   --border: #bfbfbf;
@@ -248,7 +248,7 @@
 .sideQr {
   width: 65px;
   height: 65px;
-  background: #009ee3;
+  background: #00A8E3;
   border: 1px solid #d0d5d8;
   box-sizing: border-box;
   display: flex;
@@ -269,7 +269,7 @@
   color: #fff;
   font-weight: 800;
   font-size: 18px;
-  letter-spacing: 0.08em;
+  /* letter-spacing: 0.08em; */
   text-align: center;
   text-transform: uppercase;
 }
@@ -360,7 +360,7 @@
 
 .tu {
   font-weight: 700;
-  font-size: 9px;
+  font-size: 10px;
   margin: 0 0 5px;
   color: var(--text);
 }
