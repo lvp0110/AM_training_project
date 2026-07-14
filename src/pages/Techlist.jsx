@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { getTechcardApiBase, getApiBase } from "../apiBase.js";
@@ -145,21 +145,20 @@ function iconForTechcardCode(code) {
   return <IconCmp />;
 }
 
-/** Ответ GET /api/v2/infodata/brand → плоский список { code, name }. */
-function parseInfodataBrandRows(json) {
+/** Ответ GET /api/v1/AcousticCategories → плоский список { code, name }. */
+function parseAcousticCategoryRows(json) {
   const raw = Array.isArray(json?.data)
     ? json.data
     : Array.isArray(json?.items)
       ? json.items
-      : [];
+      : Array.isArray(json)
+        ? json
+        : [];
   const rows = [];
   for (const item of raw) {
-    const ent = item?.entity ?? item?.Entity ?? item;
-    if (!ent || typeof ent !== "object") continue;
-    const code = String(ent?.Code ?? ent?.code ?? "").trim();
-    const name = String(ent?.Name ?? ent?.name ?? "").trim();
-    const typ = String(ent?.Type ?? ent?.type ?? "brand").toLowerCase();
-    if (typ && typ !== "brand") continue;
+    if (!item || typeof item !== "object") continue;
+    const code = String(item?.ShortName ?? item?.shortName ?? "").trim();
+    const name = String(item?.Name ?? item?.name ?? "").trim();
     if (!code || !name) continue;
     rows.push({ code, name });
   }
@@ -167,67 +166,16 @@ function parseInfodataBrandRows(json) {
   return rows;
 }
 
-/** Обход дерева categories/children бренда — все Entity с Type model. */
-function collectModelCodesFromInfodataNode(node, outSet) {
-  if (!node || typeof node !== "object") return;
-  const ent = node.Entity ?? node.entity;
-  if (ent) {
-    const typ = String(ent.Type ?? ent.type ?? "").toLowerCase();
-    if (typ === "model") {
-      const c = String(ent.Code ?? ent.code ?? "").trim();
-      if (c) outSet.add(c);
-    }
-  }
-  const ch = node.children ?? node.Children;
-  if (Array.isArray(ch)) {
-    for (const x of ch) collectModelCodesFromInfodataNode(x, outSet);
-  }
-}
+/** ВРЕМЕННО: slug для списка моделей в brandsBarGroup (GET /api/v2/techcard/model/{slug}). */
+const TEMP_TECHCARD_MODEL_LIST_SLUG = "100gidro";
 
-/** Код бренда → уникальные Code моделей из вложенности infodata/brand. */
-function buildBrandToModelCodesMap(json) {
-  const raw = Array.isArray(json?.data)
-    ? json.data
-    : Array.isArray(json?.items)
-      ? json.items
-      : [];
-  /** @type {Record<string, string[]>} */
-  const map = {};
-  for (const item of raw) {
-    const ent = item?.entity ?? item?.Entity;
-    if (!ent || typeof ent !== "object") continue;
-    const typ = String(ent.Type ?? ent.type ?? "brand").toLowerCase();
-    if (typ !== "brand") continue;
-    const brandCode = String(ent.Code ?? ent.code ?? "").trim();
-    if (!brandCode) continue;
-    const set = new Set();
-    const cats = item.categories ?? item.Categories ?? [];
-    for (const cat of cats) collectModelCodesFromInfodataNode(cat, set);
-    map[brandCode] = Array.from(set).sort();
-  }
-  return map;
-}
-
-/** Ответ GET /api/v2/infodata/model → плоский список { code, name }, только Type model. */
-function parseInfodataModelRows(json) {
-  const raw = Array.isArray(json?.data)
-    ? json.data
-    : Array.isArray(json?.items)
-      ? json.items
-      : [];
-  const rows = [];
-  for (const item of raw) {
-    const ent = item?.entity ?? item?.Entity ?? item;
-    if (!ent || typeof ent !== "object") continue;
-    const code = String(ent?.Code ?? ent?.code ?? "").trim();
-    const name = String(ent?.Name ?? ent?.name ?? "").trim();
-    const typ = String(ent?.Type ?? ent?.type ?? "model").toLowerCase();
-    if (typ && typ !== "model") continue;
-    if (!code || !name) continue;
-    rows.push({ code, name });
-  }
-  rows.sort((a, b) => a.name.localeCompare(b.name, "ru"));
-  return rows;
+/** ВРЕМЕННО: ответ techcard/model/{slug} → одна или несколько { code, name } для select. */
+function parseTechcardModelListRows(json, slug) {
+  const data = json?.data && typeof json.data === "object" ? json.data : json;
+  const code = String(slug || "").trim();
+  if (!code) return [];
+  const title = String(data?.title ?? json?.title ?? "").trim();
+  return [{ code, name: title || code }];
 }
 
 function Techlist() {
@@ -237,13 +185,11 @@ function Techlist() {
   const [description, setDescription] = useState("");
   const [techcardContent, setTechcardContent] = useState([]);
   const [titleImageSrc, setTitleImageSrc] = useState("");
-  /** Бренды из infodata: Code → ключ, Name в списке */
+  /** Бренды из AcousticCategories: ShortName → ключ, Name в списке */
   const [infodataBrands, setInfodataBrands] = useState([]);
   const [brandsLoading, setBrandsLoading] = useState(true);
   const [brandsError, setBrandsError] = useState(null);
   const [selectedBrandCode, setSelectedBrandCode] = useState("");
-  /** Коды моделей по коду бренда (из дерева infodata/brand) */
-  const [brandToModelCodes, setBrandToModelCodes] = useState({});
   const [infodataModels, setInfodataModels] = useState([]);
   const [modelsLoading, setModelsLoading] = useState(true);
   const [modelsError, setModelsError] = useState(null);
@@ -251,6 +197,14 @@ function Techlist() {
   /** Загрузка GET /api/v2/techcard/model/{slug} для активного листа */
   const [techcardLoading, setTechcardLoading] = useState(false);
   const [techcardError, setTechcardError] = useState(null);
+  const firstGridRef = useRef(null);
+  const continuationGridProbeRef = useRef(null);
+  const measurementHostRef = useRef(null);
+  const [gridPageHeights, setGridPageHeights] = useState({
+    first: 0,
+    continuation: 0,
+  });
+  const [sectionHeights, setSectionHeights] = useState({});
 
   const contentSections = useMemo(() => {
     if (!Array.isArray(techcardContent)) return [];
@@ -281,13 +235,112 @@ function Techlist() {
     return "";
   }, [techcardContent]);
 
-  const modelsForBrand = useMemo(() => {
-    if (!selectedBrandCode) return [];
-    const allowed = brandToModelCodes[selectedBrandCode];
-    if (!allowed?.length) return [];
-    const allow = new Set(allowed);
-    return infodataModels.filter((m) => allow.has(m.code));
-  }, [selectedBrandCode, brandToModelCodes, infodataModels]);
+  /** ВРЕМЕННО: модели из techcard, без фильтра по выбранному бренду. */
+  const modelsForBrand = useMemo(() => infodataModels, [infodataModels]);
+
+  const pagedContentSections = useMemo(() => {
+    if (!contentSections.length) return [[]];
+    const firstCap = Number(gridPageHeights.first) || 0;
+    const nextCap = Number(gridPageHeights.continuation) || 0;
+    if (!firstCap || !nextCap) return [contentSections];
+    const hasAllHeights = contentSections.every((section) => sectionHeights[section.key]);
+    if (!hasAllHeights) return [contentSections];
+
+    const pages = [[]];
+    let pageIndex = 0;
+    let leftHeight = 0;
+    let rightHeight = 0;
+    let currentCap = firstCap;
+
+    const tryPlaceOnCurrentPage = (sectionHeight, section) => {
+      if (leftHeight + sectionHeight <= currentCap) {
+        pages[pageIndex].push(section);
+        leftHeight += sectionHeight;
+        return true;
+      }
+      if (rightHeight + sectionHeight <= currentCap) {
+        pages[pageIndex].push(section);
+        rightHeight += sectionHeight;
+        return true;
+      }
+      return false;
+    };
+    
+    const startNewPage = () => {
+      pages.push([]);
+      pageIndex += 1;
+      leftHeight = 0;
+      rightHeight = 0;
+      currentCap = nextCap;
+    };
+
+    for (const section of contentSections) {
+      const sectionHeight = Math.max(1, Number(sectionHeights[section.key]) || 0);
+      if (tryPlaceOnCurrentPage(sectionHeight, section)) continue;
+
+      startNewPage();
+      if (tryPlaceOnCurrentPage(sectionHeight, section)) continue;
+
+      // Секция выше доступной высоты нового листа: не теряем её.
+      pages[pageIndex].push(section);
+      leftHeight = sectionHeight;
+      rightHeight = 0;
+    }
+
+    return pages;
+  }, [contentSections, gridPageHeights.first, gridPageHeights.continuation, sectionHeights]);
+
+  useEffect(() => {
+    if (!contentSections.length) {
+      setSectionHeights({});
+      return;
+    }
+    const host = measurementHostRef.current;
+    if (!host) return;
+    const nodes = host.querySelectorAll("[data-measure-key]");
+    const nextHeights = {};
+    nodes.forEach((node) => {
+      const key = node.getAttribute("data-measure-key");
+      if (!key) return;
+      nextHeights[key] = Math.ceil(node.getBoundingClientRect().height);
+    });
+    const hasAll = contentSections.every((s) => nextHeights[s.key] > 0);
+    if (!hasAll) return;
+    setSectionHeights((prev) => {
+      const prevKeys = Object.keys(prev);
+      const nextKeys = Object.keys(nextHeights);
+      if (prevKeys.length === nextKeys.length) {
+        let changed = false;
+        for (const key of nextKeys) {
+          if (prev[key] !== nextHeights[key]) {
+            changed = true;
+            break;
+          }
+        }
+        if (!changed) return prev;
+      }
+      return nextHeights;
+    });
+  }, [contentSections, productTitle, subtitle, toCode, description, titleImageSrc]);
+
+  useEffect(() => {
+    const updatePageHeights = () => {
+      const first = Math.floor(firstGridRef.current?.clientHeight || 0);
+      const continuation = Math.floor(continuationGridProbeRef.current?.clientHeight || 0);
+      if (!first || !continuation) return;
+      setGridPageHeights((prev) =>
+        prev.first === first && prev.continuation === continuation
+          ? prev
+          : { first, continuation }
+      );
+    };
+
+    updatePageHeights();
+    window.addEventListener("resize", updatePageHeights);
+    return () => {
+      window.removeEventListener("resize", updatePageHeights);
+    };
+  }, [contentSections.length]);
 
   useEffect(() => {
     setSelectedModelCode("");
@@ -389,8 +442,8 @@ function Techlist() {
     const fetchBrands = async () => {
       const base = getApiBase();
       const url = base
-        ? `${base}/api/v2/infodata/brand`
-        : "/api/v2/infodata/brand";
+        ? `${base}/api/v1/AcousticCategories`
+        : "/api/v1/AcousticCategories";
       try {
         setBrandsLoading(true);
         setBrandsError(null);
@@ -404,22 +457,19 @@ function Techlist() {
             json?.message || `HTTP ${response.status}`
           );
         }
-        const rows = parseInfodataBrandRows(json);
-        const brandModelsMap = buildBrandToModelCodesMap(json);
+        const rows = parseAcousticCategoryRows(json);
         if (!cancelled) {
           setInfodataBrands(rows);
-          setBrandToModelCodes(brandModelsMap);
         }
       } catch (e) {
         if (!cancelled) {
           setInfodataBrands([]);
-          setBrandToModelCodes({});
           setBrandsError(
             e?.message || "Не удалось загрузить список брендов"
           );
         }
         if (import.meta.env.DEV) {
-          console.warn("[Techlist] infodata/brand:", url, e);
+          console.warn("[Techlist] AcousticCategories:", url, e);
         }
       } finally {
         if (!cancelled) setBrandsLoading(false);
@@ -434,10 +484,11 @@ function Techlist() {
   useEffect(() => {
     let cancelled = false;
     const fetchModels = async () => {
-      const base = getApiBase();
+      const base = getTechcardApiBase();
+      const slug = encodeURIComponent(TEMP_TECHCARD_MODEL_LIST_SLUG);
       const url = base
-        ? `${base}/api/v2/infodata/model`
-        : "/api/v2/infodata/model";
+        ? `${base}/api/v2/techcard/model/${slug}`
+        : `/api/v2/techcard/model/${slug}`;
       try {
         setModelsLoading(true);
         setModelsError(null);
@@ -449,7 +500,10 @@ function Techlist() {
         if (!response.ok) {
           throw new Error(json?.message || `HTTP ${response.status}`);
         }
-        const rows = parseInfodataModelRows(json);
+        const rows = parseTechcardModelListRows(
+          json,
+          TEMP_TECHCARD_MODEL_LIST_SLUG
+        );
         if (!cancelled) setInfodataModels(rows);
       } catch (e) {
         if (!cancelled) {
@@ -459,7 +513,7 @@ function Techlist() {
           );
         }
         if (import.meta.env.DEV) {
-          console.warn("[Techlist] infodata/model:", url, e);
+          console.warn("[Techlist] techcard model list:", url, e);
         }
       } finally {
         if (!cancelled) setModelsLoading(false);
@@ -473,7 +527,7 @@ function Techlist() {
 
   return (
     <div className={styles.page}>
-      {/* Вне макета листа (.sheet): бренды и модели по infodata */}
+      {/* Вне макета листа (.sheet): бренды из AcousticCategories, модели из techcard */}
       <div className={styles.brandsBar}>
         <div className={styles.brandsBarGroup}>
           <label
@@ -514,9 +568,7 @@ function Techlist() {
           >
             Модель
           </label>
-          {!selectedBrandCode ? (
-            <span className={styles.brandsMeta}>Сначала выберите бренд</span>
-          ) : modelsLoading ? (
+          {modelsLoading ? (
             <span className={styles.brandsMeta}>Загрузка моделей…</span>
           ) : modelsError ? (
             <span className={styles.brandsError} role="alert">
@@ -532,7 +584,7 @@ function Techlist() {
             >
               <option value="">
                 {modelsForBrand.length === 0
-                  ? "Нет моделей для этого бренда"
+                  ? "Нет моделей"
                   : "Выберите модель"}
               </option>
               {modelsForBrand.map((m) => (
@@ -553,18 +605,47 @@ function Techlist() {
         </div>
       </div>
 
+      <div
+        ref={measurementHostRef}
+        style={{
+          position: "absolute",
+          inset: "auto",
+          visibility: "hidden",
+          pointerEvents: "none",
+          zIndex: -1,
+          left: "-99999px",
+          top: "-99999px",
+          width: "252px",
+        }}
+        aria-hidden
+      >
+        {contentSections.map((s) => (
+          <div key={`measure-${s.key}`} data-measure-key={s.key}>
+            <Section
+              icon={iconForTechcardCode(s.code)}
+              title={s.title}
+              text={s.text}
+              markdownComponents={techIntroMarkdownComponents}
+            />
+          </div>
+        ))}
+      </div>
+
       <div className={styles.sheetScroll}>
         <div className={styles.sheetScaleSlot}>
-          <div className={styles.sheetWrapOuter}>
-            <div className={styles.sheetWrap}>
-              <article
-                className={styles.sheet}
-                aria-label={
-                  productTitle
-                    ? `Технический лист ${productTitle}`
-                    : "Технический лист"
-                }
-              >
+            {pagedContentSections.map((pageSections, pageIndex) => {
+              const isFirstPage = pageIndex === 0;
+              return (
+                <div className={styles.sheetWrapOuter} key={`sheet-outer-${pageIndex}`}>
+                  <div className={styles.sheetWrap}>
+                  <article
+                    className={styles.sheet}
+                    aria-label={
+                      productTitle
+                        ? `Технический лист ${productTitle}, лист ${pageIndex + 1}`
+                        : `Технический лист, лист ${pageIndex + 1}`
+                    }
+                  >
                 <div className={`${styles.sideBarColumn} ${styles.block}`}>
                 <div className={`${styles.sideBarTop} ${styles.block}`}>
                   <div className={styles.sideBarTopTitleWrap}>
@@ -592,7 +673,9 @@ function Techlist() {
               </div>
 
               <div className={styles.body}>
-                <header className={`${styles.headerRow} ${styles.block}`}>
+                {isFirstPage ? (
+                  <>
+                    <header className={`${styles.headerRow} ${styles.block}`}>
                   <div className={styles.logoBlock}>
                     <img
                       className={styles.logoImg}
@@ -604,9 +687,9 @@ function Techlist() {
                   <div className={styles.meta}>
                     Технический лист № 1.1&nbsp;&nbsp;Версия от 15.11.2021
                   </div>
-                </header>
+                    </header>
 
-                <div className={`${styles.topBand} ${styles.block}`}>
+                    <div className={`${styles.topBand} ${styles.block}`}>
                   <div className={styles.topBandLeft}>
                     <h1 className={styles.productName}>{productTitle || "\u00A0"}</h1>
                     <p className={styles.subtitle}>{subtitle || "\u00A0"}</p>
@@ -634,10 +717,15 @@ function Techlist() {
                   ) : (
                     <div className={styles.productImgPlaceholder} aria-hidden />
                   )}
-                </div>
+                    </div>
+                  </>
+                ) : null}
 
-                <div className={styles.grid}>
-                  {contentSections.map((s) => (
+                <div
+                  className={styles.grid}
+                  ref={isFirstPage ? firstGridRef : undefined}
+                >
+                  {pageSections.map((s) => (
                     <Section
                       key={s.key}
                       icon={iconForTechcardCode(s.code)}
@@ -654,8 +742,29 @@ function Techlist() {
                   <div className={styles.footerLine}>support@acoustic.ru, www.acoustic.ru</div>
                 </footer>
               </div>
+                  </article>
+                  </div>
+                </div>
+              );
+            })}
+          <div
+            className={styles.sheetWrap}
+            aria-hidden
+            style={{
+              position: "absolute",
+              visibility: "hidden",
+              pointerEvents: "none",
+              left: "-99999px",
+              top: "-99999px",
+            }}
+          >
+            <article className={styles.sheet}>
+              <div className={`${styles.sideBarColumn} ${styles.block}`} />
+              <div className={styles.body}>
+                <div ref={continuationGridProbeRef} className={styles.grid} />
+                <footer className={`${styles.footer} ${styles.block}`} />
+              </div>
             </article>
-            </div>
           </div>
         </div>
       </div>

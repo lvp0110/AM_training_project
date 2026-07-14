@@ -73,12 +73,14 @@
 
 .sheetScaleSlot {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: flex-start;
   align-items: flex-start;
   width: 100%;
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  gap: 1rem;
 }
 
 /* Оболочка реального визуального размера; внутри — layout 595×842 + scale от верхнего левого угла */
@@ -441,7 +443,7 @@
   column-count: 2;
   column-gap: 22px;
   column-rule: 1px solid var(--blue);
-  column-fill: balance;
+  column-fill: auto;
 }
 
 .section {

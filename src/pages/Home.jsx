@@ -90,8 +90,8 @@ function Home() {
         setBrandsError(null);
         const base = getApiBase();
         const url = base
-          ? `${base}/api/v2/botservice/brands`
-          : "/api/v2/botservice/brands";
+          ? `${base}/api/v1/AcousticCategories`
+          : "/api/v1/AcousticCategories";
         const response = await fetch(url, {
           method: "GET",
           headers: { accept: "application/json" },
@@ -211,9 +211,17 @@ function Home() {
   }, [selectedBrand, selectedTopic]);
 
   const getBrandLabel = (brand) =>
-    (brand?.name_rus || brand?.name || brand?.title || brand?.id) ?? "—";
+    (brand?.Name || brand?.name || brand?.name_rus || brand?.title) ?? "—";
   const getBrandValue = (brand) =>
-    String(brand?.code ?? brand?.id ?? brand?.name_rus ?? brand?.name ?? "");
+    String(
+      brand?.ShortName ??
+        brand?.shortName ??
+        brand?.code ??
+        brand?.id ??
+        brand?.Name ??
+        brand?.name ??
+        ""
+    );
 
   const getTopicLabel = (topic) => topic?.name ?? topic?.Name ?? "";
 

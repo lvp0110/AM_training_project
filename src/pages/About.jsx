@@ -56,8 +56,8 @@ function About() {
 
         const cleanBaseUrl = getApiBase();
         const apiUrl = cleanBaseUrl
-          ? `${cleanBaseUrl}/api/v2/botservice/brands`
-          : "/api/v2/botservice/brands";
+          ? `${cleanBaseUrl}/api/v1/AcousticCategories`
+          : "/api/v1/AcousticCategories";
 
         const response = await fetch(apiUrl, {
           method: "GET",
@@ -201,7 +201,13 @@ function About() {
 
         const selected = brands.find((brand) => {
           const brandValue =
-            brand?.id || brand?.Id || brand?.name_rus || brand?.name;
+            brand?.ShortName ||
+            brand?.shortName ||
+            brand?.id ||
+            brand?.Id ||
+            brand?.name_rus ||
+            brand?.name ||
+            brand?.Name;
           return String(brandValue) === String(selectedBrand);
         });
 
@@ -210,10 +216,12 @@ function About() {
         }
 
         const brandCode =
+          selected?.ShortName ||
+          selected?.shortName ||
           selected?.code ||
           selected?.code_en ||
           selected?.code_ru ||
-          (selected?.name_rus || selected?.name || "")
+          (selected?.Name || selected?.name_rus || selected?.name || "")
             .toLowerCase()
             .replace(/\s+/g, "_");
 
@@ -430,11 +438,13 @@ function About() {
           <option value="">Выберите бренд</option>
           {brands.map((brand, index) => {
             const brandName =
-              brand?.name_rus ||
-              brand?.name ||
               brand?.Name ||
+              brand?.name ||
+              brand?.name_rus ||
               `Бренд ${index + 1}`;
             const brandValue =
+              brand?.ShortName ||
+              brand?.shortName ||
               brand?.id ||
               brand?.Id ||
               brand?.name_rus ||
