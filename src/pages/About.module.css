@@ -69,19 +69,23 @@
   display: flex;
   flex-wrap: wrap;
   flex-direction: row;
-  align-items: center;
+  align-items: stretch;
   gap: 0.5rem;
   margin-top: 1rem;
+  width: 100%;
 }
 
 .brandBtn {
-  flex: 0 0 auto;
-  padding: 0.5rem 1rem;
+  flex: 1 0 auto;
+  min-width: fit-content;
+  box-sizing: border-box;
+  padding: 0.5rem 0.75rem;
   font-size: 0.95rem;
   border: 1px solid #0d47a1;
   border-radius: 4px;
   cursor: pointer;
   white-space: nowrap;
+  text-align: center;
 }
 
 .brandBtn:disabled {
