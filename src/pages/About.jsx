@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { getApiBase } from "../apiBase.js";
@@ -35,18 +35,12 @@ function About() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedBrand, setSelectedBrand] = useState("");
-  const [brandContent, setBrandContent] = useState(null);
   const [sections, setSections] = useState([]); // все загруженные разделы { topicValue, topicName, content }
   const [loadingContent, setLoadingContent] = useState(false);
   const [contentError, setContentError] = useState(null);
-  const [topics, setTopics] = useState([]);
-  const [topicsLoading, setTopicsLoading] = useState(true);
-  const [topicsError, setTopicsError] = useState(null);
-  const [selectedTopic, setSelectedTopic] = useState("");
   const [expandedSections, setExpandedSections] = useState(new Set());
   const [sectionsViewMode, setSectionsViewMode] = useState("vertical"); // "vertical" | "horizontal"
   const [isSmallScreen, setIsSmallScreen] = useState(false);
-  const sectionRefs = useRef({});
 
   useEffect(() => {
     const fetchBrands = async () => {
@@ -120,77 +114,8 @@ function About() {
   }, []);
 
   useEffect(() => {
-    const fetchTopics = async () => {
-      const cleanBaseUrl = getApiBase();
-      const topicsUrl = cleanBaseUrl
-        ? `${cleanBaseUrl}/api/v2/text/categories`
-        : "/api/v2/text/categories";
-
-      try {
-        setTopicsLoading(true);
-        setTopicsError(null);
-
-        const response = await fetch(topicsUrl, {
-          method: "GET",
-          headers: {
-            accept: "application/json",
-          },
-          mode: "cors",
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text().catch(() => "");
-          throw new Error(
-            `HTTP error! status: ${response.status}${
-              errorText ? `: ${errorText}` : ""
-            }`
-          );
-        }
-
-        const data = await response.json();
-        console.log("Topics API Response:", data);
-
-        // Обработка разных форматов ответа
-        let topicsArray = [];
-        if (Array.isArray(data)) {
-          topicsArray = data;
-        } else if (data && Array.isArray(data.data)) {
-          topicsArray = data.data;
-        } else if (data && Array.isArray(data.items)) {
-          topicsArray = data.items;
-        } else if (data && typeof data === "object") {
-          topicsArray = Object.values(data);
-        } else {
-          throw new Error("Неожиданный формат данных от API");
-        }
-
-        setTopics(topicsArray);
-      } catch (err) {
-        let errorMessage = err.message;
-        if (
-          err.name === "TypeError" &&
-          err.message.includes("Failed to fetch")
-        ) {
-          errorMessage =
-            "Ошибка подключения к API серверу. Возможные причины: CORS проблема, сервер недоступен или неправильный URL.";
-        } else if (err.message.includes("404")) {
-          errorMessage = `API endpoint не найден (404). Проверьте URL API: ${topicsUrl}`;
-        }
-        setTopicsError(errorMessage);
-        console.error("Error fetching topics:", err);
-        setTopics([]);
-      } finally {
-        setTopicsLoading(false);
-      }
-    };
-
-    fetchTopics();
-  }, []);
-
-  useEffect(() => {
     const fetchBrandContent = async () => {
       if (!selectedBrand || !brands.length) {
-        setBrandContent(null);
         setSections([]);
         return;
       }
@@ -305,15 +230,9 @@ function About() {
           })
           .filter(Boolean);
         setSections(sectionsList);
-
-        const fullContent = sectionsList
-          .map(({ topicName, content }) => `## ${topicName}\n\n${content}`)
-          .join("\n\n");
-        setBrandContent(fullContent || null);
       } catch (err) {
         setContentError(err.message);
         console.error("Error fetching brand content:", err);
-        setBrandContent(null);
         setSections([]);
       } finally {
         setLoadingContent(false);
@@ -322,15 +241,6 @@ function About() {
 
     fetchBrandContent();
   }, [selectedBrand, brands]);
-
-  const openSection = useCallback((topicValue) => {
-    const key = String(topicValue);
-    setExpandedSections((prev) => new Set(prev).add(key));
-    setTimeout(() => {
-      const el = sectionRefs.current[key];
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 100);
-  }, []);
 
   const toggleSection = useCallback((topicValue) => {
     const key = String(topicValue);
@@ -358,26 +268,9 @@ function About() {
   useEffect(() => {
     if (isSmallScreen && sectionsViewMode !== "vertical") {
       setSectionsViewMode("vertical");
-      if (selectedTopic) {
-        setExpandedSections(new Set([String(selectedTopic)]));
-      }
+      setExpandedSections(new Set());
     }
-  }, [isSmallScreen, sectionsViewMode, selectedTopic]);
-
-  useEffect(() => {
-    if (selectedTopic && sections.length > 0) {
-      setExpandedSections(
-        sectionsViewMode === "horizontal"
-          ? new Set(sections.map((s) => String(s.topicValue)))
-          : new Set([String(selectedTopic)])
-      );
-      const key = String(selectedTopic);
-      setTimeout(() => {
-        const el = sectionRefs.current[key];
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 100);
-    }
-  }, [selectedTopic, sections, sectionsViewMode]);
+  }, [isSmallScreen, sectionsViewMode]);
 
   return (
     <div className={styles.page}>
@@ -429,7 +322,6 @@ function About() {
           value={selectedBrand}
           onChange={(e) => {
             setSelectedBrand(e.target.value);
-            setSelectedTopic("");
             setExpandedSections(new Set());
           }}
           className={styles.select}
@@ -458,103 +350,6 @@ function About() {
             );
           })}
         </select>
-
-        {selectedBrand && (
-          <>
-            {topicsLoading && (
-              <p className={styles.topicsLoading}>
-                {(() => {
-                  // Если выбран раздел, показываем его название
-                  if (selectedTopic) {
-                    const currentTopic = topics.find(
-                      (topic) =>
-                        String(
-                          topic?.id ||
-                            topic?.Id ||
-                            topic?.code ||
-                            topic?.Code ||
-                            ""
-                        ) === String(selectedTopic) ||
-                        String(
-                          topic?.description ||
-                            topic?.Description ||
-                            topic?.name ||
-                            topic?.Name ||
-                            ""
-                        ) === String(selectedTopic)
-                    );
-                    if (currentTopic) {
-                      const topicName =
-                        currentTopic?.description ||
-                        currentTopic?.Description ||
-                        currentTopic?.name ||
-                        currentTopic?.Name ||
-                        currentTopic?.code ||
-                        currentTopic?.Code ||
-                        "раздела";
-                      return `Загрузка ${topicName}...`;
-                    }
-                  }
-                  // Если загружается раздел с code === "brand_line_info"
-                  const brandLineInfoTopic = topics.find(
-                    (topic) =>
-                      topic?.code === "brand_line_info" ||
-                      topic?.Code === "brand_line_info"
-                  );
-                  if (brandLineInfoTopic) {
-                    const topicName =
-                      brandLineInfoTopic?.description ||
-                      brandLineInfoTopic?.Description ||
-                      brandLineInfoTopic?.name ||
-                      brandLineInfoTopic?.Name ||
-                      "раздела";
-                    return `Загрузка ${topicName}...`;
-                  }
-                  // По умолчанию
-                  return "Загрузка разделов...";
-                })()}
-              </p>
-            )}
-            {topicsError && (
-              <div className={styles.topicsError}>
-                Ошибка загрузки разделов: {topicsError}
-              </div>
-            )}
-            <select
-              value={selectedTopic}
-              onChange={(e) => {
-                const val = e.target.value;
-                setSelectedTopic(val);
-                if (val) openSection(val);
-              }}
-              className={styles.select}
-              disabled={topicsLoading || topicsError || topics.length === 0}
-            >
-              <option value="">Все разделы</option>
-              {topics.map((topic, index) => {
-                const topicDescription =
-                  topic?.description ||
-                  topic?.Description ||
-                  topic?.name ||
-                  topic?.Name ||
-                  `Раздел ${index + 1}`;
-                const topicValue =
-                  topic?.id ||
-                  topic?.Id ||
-                  topic?.code ||
-                  topic?.Code ||
-                  topic?.description ||
-                  String(index);
-
-                return (
-                  <option key={index} value={topicValue}>
-                    {topicDescription}
-                  </option>
-                );
-              })}
-            </select>
-          </>
-        )}
       </div>
       {selectedBrand && (
         <div className={styles.contentPanel}>
@@ -566,55 +361,6 @@ function About() {
           )}
           {!loadingContent &&
             !contentError &&
-            !selectedTopic &&
-            brandContent && (
-              <div className={styles.markdownBody}>
-                <Markdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    ...markdownListTableComponents,
-                    h2: ({ node, ...props }) => {
-                      const handleClick = (e) => {
-                        const text = e.currentTarget.textContent?.trim() ?? "";
-                        const section = sections.find(
-                          (s) => (s.topicName?.trim() ?? "") === text
-                        );
-                        if (section) {
-                          setSelectedTopic(String(section.topicValue));
-                          openSection(section.topicValue);
-                        }
-                      };
-                      return (
-                        <h2
-                          role="button"
-                          tabIndex={0}
-                          className={styles.mdH2}
-                          onClick={handleClick}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              e.currentTarget.click();
-                            }
-                          }}
-                          {...props}
-                        />
-                      );
-                    },
-                    h3: ({ node, ...props }) => (
-                      <h3 className={styles.mdH3} {...props} />
-                    ),
-                    h4: ({ node, ...props }) => (
-                      <h4 className={styles.mdH4} {...props} />
-                    ),
-                  }}
-                >
-                  {brandContent}
-                </Markdown>
-              </div>
-            )}
-          {!loadingContent &&
-            !contentError &&
-            selectedTopic &&
             sections.length > 0 && (
               <div
                 className={`${styles.contentPanelSections} ${
@@ -637,7 +383,7 @@ function About() {
                             new Set(sections.map((s) => String(s.topicValue)))
                           );
                         } else {
-                          setExpandedSections(new Set([String(selectedTopic)]));
+                          setExpandedSections(new Set());
                         }
                         return next;
                       });
@@ -711,9 +457,6 @@ function About() {
                     return (
                       <section
                         key={key}
-                        ref={(el) => {
-                          sectionRefs.current[key] = el;
-                        }}
                         className={`${styles.sectionCard} ${
                           isExpanded
                             ? styles.sectionCardExpanded
@@ -729,7 +472,6 @@ function About() {
                           tabIndex={isVertical ? 0 : undefined}
                           onClick={() => {
                             if (isVertical) toggleSection(section.topicValue);
-                            setSelectedTopic(key);
                           }}
                           onKeyDown={
                             isVertical
@@ -737,7 +479,6 @@ function About() {
                                   if (e.key === "Enter" || e.key === " ") {
                                     e.preventDefault();
                                     toggleSection(section.topicValue);
-                                    setSelectedTopic(key);
                                   }
                                 }
                               : undefined
@@ -791,7 +532,6 @@ function About() {
             )}
           {!loadingContent &&
             !contentError &&
-            !brandContent &&
             sections.length === 0 && (
               <div className={styles.emptyState}>
                 <p>Информация по разделам не найдена.</p>
