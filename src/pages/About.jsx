@@ -315,41 +315,41 @@ function About() {
       {!loading && !error && brands.length === 0 && (
         <p className={styles.muted}>Бренды не найдены</p>
       )}
-      <div className={styles.controlsRow}>
-        <select
-          name="brand"
-          id="brand"
-          value={selectedBrand}
-          onChange={(e) => {
-            setSelectedBrand(e.target.value);
-            setExpandedSections(new Set());
-          }}
-          className={styles.select}
-          disabled={loading || error || brands.length === 0}
-        >
-          <option value="">Выберите бренд</option>
-          {brands.map((brand, index) => {
-            const brandName =
-              brand?.Name ||
-              brand?.name ||
-              brand?.name_rus ||
-              `Бренд ${index + 1}`;
-            const brandValue =
-              brand?.ShortName ||
-              brand?.shortName ||
-              brand?.id ||
-              brand?.Id ||
-              brand?.name_rus ||
-              brand?.name ||
-              brandName;
+      <div className={styles.controlsRow} role="group" aria-label="Бренды">
+        {brands.map((brand, index) => {
+          const brandName =
+            brand?.Name ||
+            brand?.name ||
+            brand?.name_rus ||
+            `Бренд ${index + 1}`;
+          const brandValue =
+            brand?.ShortName ||
+            brand?.shortName ||
+            brand?.id ||
+            brand?.Id ||
+            brand?.name_rus ||
+            brand?.name ||
+            brandName;
+          const isActive = String(selectedBrand) === String(brandValue);
 
-            return (
-              <option key={index} value={brandValue}>
-                {brandName}
-              </option>
-            );
-          })}
-        </select>
+          return (
+            <button
+              key={index}
+              type="button"
+              disabled={loading || error}
+              aria-pressed={isActive}
+              onClick={() => {
+                setSelectedBrand(brandValue);
+                setExpandedSections(new Set());
+              }}
+              className={`${styles.brandBtn} ${
+                isActive ? styles.brandBtnActive : styles.brandBtnInactive
+              }`}
+            >
+              {brandName}
+            </button>
+          );
+        })}
       </div>
       {selectedBrand && (
         <div className={styles.contentPanel}>

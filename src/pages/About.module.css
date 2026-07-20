@@ -9,6 +9,7 @@
 }
 
 .panelLinkWrap {
+  display: none;
   text-align: right;
 }
 
@@ -67,17 +68,39 @@
 .controlsRow {
   display: flex;
   flex-wrap: wrap;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
 }
 
-.select {
-  width: 100%;
-  max-width: 400px;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
+.brandBtn {
+  flex: 0 0 auto;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  border: 1px solid #0d47a1;
   border-radius: 4px;
-  font-size: 1rem;
-  margin-top: 1rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.brandBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.brandBtnActive {
+  background-color: #0d47a1;
+  color: #fff;
+}
+
+.brandBtnInactive {
+  background-color: #fff;
+  color: #0d47a1;
+}
+
+.brandBtnInactive:hover:not(:disabled) {
+  background-color: #e3f2fd;
 }
 
 .contentPanel {
